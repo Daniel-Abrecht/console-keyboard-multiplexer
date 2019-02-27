@@ -49,7 +49,7 @@ void set_keyboard_size(int size){
   }
 }
 
-int forkcall(void* ptr, int(*init)(void*ptr), char* args[]){
+int forkcall(void* ptr, int(*init)(void*ptr), char* args[], int cfd){
   int ret = fork();
   if(ret == -1)
     return -1;
@@ -59,6 +59,11 @@ int forkcall(void* ptr, int(*init)(void*ptr), char* args[]){
   if(ret == -1)
     exit(errno);
   // TODO: use a pipe for improved error detection
+  if(cfd > 0){
+    dup2(cfd,3);
+    if(cfd != 3)
+      close(cfd);
+  }
   execvp(args[0], args);
   exit(errno);
 }
@@ -68,8 +73,8 @@ int execpane_init(void* ptr){
   return tym_pane_set_env(pane);
 }
 
-int execpane(int pane, char* argv[]){
-  return forkcall(&pane, execpane_init, argv);
+int execpane(int pane, char* argv[], int cfd){
+  return forkcall(&pane, execpane_init, argv, cfd);
 }
 
 int main(){
@@ -88,8 +93,16 @@ int main(){
     perror("tym_create_pane failed");
     return 1;
   }
-  int tpid = execpane(   top_pane, (char*[]){"bash", "-l", 0});
-  int bpid = execpane(bottom_pane, (char*[]){"bash", 0});
+  int tpid = execpane(   top_pane, (char*[]){"login", 0}, -1);
+  int cfd[2];
+  pipe(cfd);
+  int bpid = execpane(bottom_pane, (char*[]){"console-keyboard-basic", 0}, cfd[1]);
+  close(cfd[1]);
+  int c;
+  int mfd = tym_pane_get_masterfd(top_pane);
+  while(read(cfd[0],&c,1) == 1){
+    write(mfd, &c, 1);
+  }
   while(waitpid(tpid,0,0) == -1 && errno == EINTR);
   while(waitpid(bpid,0,0) == -1 && errno == EINTR);
   tym_shutdown();
