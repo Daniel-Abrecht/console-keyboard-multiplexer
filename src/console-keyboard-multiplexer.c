@@ -82,7 +82,7 @@ int main(){
     perror("tym_init failed");
     return 1;
   }
-  set_keyboard_size(24);
+  set_keyboard_size(12);
   top_pane = tym_pane_create(&top_pane_coordinates);
   if(top_pane == -1){
     perror("tym_create_pane failed");
@@ -93,6 +93,8 @@ int main(){
     perror("tym_create_pane failed");
     return 1;
   }
+  tym_pane_set_flag(bottom_pane, TYM_PF_DISALLOW_FOCUS, true);
+  tym_pane_set_flag(top_pane, TYM_PF_FOCUS, true);
   int tpid = execpane(   top_pane, (char*[]){"login", 0}, -1);
   int cfd[2];
   pipe(cfd);
