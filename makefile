@@ -4,6 +4,8 @@
 CC = gcc
 AR = ar
 
+PREFIX = /usr
+
 OPTIONS  = -ffunction-sections -fdata-sections -g -Og
 CC_OPTS  = -fvisibility=hidden -I include -I repo/libttymultiplex/include
 CC_OPTS += -std=c99 -Wall -Wextra -pedantic -Werror -D_DEFAULT_SOURCE
@@ -32,6 +34,12 @@ repo/libttymultiplex/bin/libttymultiplex.so: repo/libttymultiplex/.repo
 
 bin/console-keyboard-multiplexer: build/console-keyboard-multiplexer.o bin/.dir repo/libttymultiplex/bin/libttymultiplex.so
 	$(CC) $(LD_OPTS) -Wl,--whole-archive $< -Wl,--no-whole-archive -o $@
+
+install:
+	cp bin/console-keyboard-multiplexer $(PREFIX)/bin/console-keyboard-multiplexer
+
+uninstall:
+	rm -f $(PREFIX)/bin/console-keyboard-multiplexer
 
 clean:
 	rm -rf bin/ build/
