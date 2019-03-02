@@ -1,0 +1,7 @@
+The Debian Package console-keyboard-multiplexer
+----------------------------
+
+This package provides a terminal multiplexer capable of displaying a keyboard on
+the bottom and another application on the top of a terminal.
+
+ -- Daniel Patrick Abrecht <deb@danielabrecht.ch>  Sat, 02 Mar 2019 16:57:59 +0000

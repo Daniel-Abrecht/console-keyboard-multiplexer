@@ -1,0 +1,18 @@
+Source: console-keyboard-multiplexer
+Section: misc
+Priority: optional
+Maintainer: Daniel Patrick Abrecht <deb@danielabrecht.ch>
+Build-Depends: libttymultiplex-dev, debhelper (>= 9)
+Standards-Version: 3.9.8
+#Homepage: <insert the upstream URL, if relevant>
+Vcs-Git:
+ https://github.com/Daniel-Abrecht/console-keyboard-multiplexer.git
+ https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer.git
+Vcs-Browser:
+ https://github.com/Daniel-Abrecht/console-keyboard-multiplexer
+ https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer
+
+Package: console-keyboard-multiplexer
+Architecture: any
+Depends: libttymultiplex0, console-keyboard, ${shlibs:Depends}, ${misc:Depends}
+Description: Displays a keyboard and another program on the same console
