@@ -90,7 +90,10 @@ void childexit(int x){
   write(childexitnotifier,"",1);
 }
 
-int main(){
+int main(int argc, char* argv[]){
+
+  if(argc <= 1)
+    argv = (char*[]){argv[0],"login",0};
 
   atexit(cleanup);
 
@@ -122,7 +125,7 @@ int main(){
   signal(SIGCHLD, childexit);
 
   // Execute programs;
-  int tpid = execpane(   top_pane, (char*[]){"login", 0}, -1);
+  int tpid = execpane(   top_pane, argv+1, -1);
   int cfd[2];
   if(pipe(cfd) == -1){
     perror("pipe failed");
@@ -172,9 +175,6 @@ int main(){
       }
     }
   }
-
-  signal(SIGCHLD, SIG_IGN);
-  while(waitpid(-1, 0, WNOHANG) > 0); // In case a child exited before SIGCHLD was set to SIG_IGN
 
   return 0;
 }
