@@ -32,10 +32,13 @@ bin/console-keyboard-multiplexer: build/console-keyboard-multiplexer.o
 
 install:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin/"
+	mkdir -p "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/"
 	cp bin/console-keyboard-multiplexer "$(DESTDIR)$(PREFIX)/bin/console-keyboard-multiplexer"
+	cp config/console-keyboard-multiplexer-systemd-override.conf "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/console-keyboard-multiplexer.conf"
 
 uninstall:
 	rm -f "$(DESTDIR)$(PREFIX)/bin/console-keyboard-multiplexer"
+	rm -f "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/console-keyboard-multiplexer.conf"
 
 clean:
 	rm -rf bin/ build/
