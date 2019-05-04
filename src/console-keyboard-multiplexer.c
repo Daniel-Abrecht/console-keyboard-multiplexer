@@ -14,31 +14,28 @@
 int keyboard_size;
 
 int top_pane = -1;
-struct tym_superposition top_pane_coordinates = {
-  .position = { [TYM_P_RATIO] = { [1] = { .axis = {
-    { .value = { .real = 1 } },
-    { .value = { .real = 1 } }
+struct tym_super_position_rectangle top_pane_coordinates = {
+  .edge[TYM_RECT_BOTTOM_RIGHT].type[TYM_P_RATIO].axis = {
+    [TYM_AXIS_HORIZONTAL].value.real = 1,
+    [TYM_AXIS_VERTICAL].value.real = 1,
   }
-}}}};
+};
 
 int bottom_pane = -1;
-struct tym_superposition bottom_pane_coordinates = {
-  .position = { [TYM_P_RATIO] = {
-    { .axis = {
-      { .value = { .real = 0 } },
-      { .value = { .real = 1 } }
-    }},
-    { .axis = {
-      { .value = { .real = 1 } },
-      { .value = { .real = 1 } }
-    }}
+struct tym_super_position_rectangle bottom_pane_coordinates = {
+  .edge[TYM_RECT_TOP_LEFT].type[TYM_P_RATIO].axis = {
+    [TYM_AXIS_VERTICAL].value.real = 1,
+  },
+  .edge[TYM_RECT_BOTTOM_RIGHT].type[TYM_P_RATIO].axis = {
+    [TYM_AXIS_HORIZONTAL].value.real = 1,
+    [TYM_AXIS_VERTICAL].value.real = 1,
   }
-}};
+};
 
 void set_keyboard_size(int size){
   keyboard_size = size;
-  top_pane_coordinates.position[TYM_P_CHARFIELD][1].axis[1].value.integer = -size;
-  bottom_pane_coordinates.position[TYM_P_CHARFIELD][0].axis[1].value.integer = -size;
+  TYM_RECT_POS_REF(top_pane_coordinates, CHARFIELD, TYM_BOTTOM) = -size;
+  TYM_RECT_POS_REF(bottom_pane_coordinates, CHARFIELD, TYM_TOP) = -size;
   if(top_pane != -1){
     if( tym_pane_resize(top_pane, &top_pane_coordinates) == -1){
 //      perror("tym_resize_pane failed");
@@ -168,11 +165,9 @@ int main(int argc, char* argv[]){
     if(fds[PFD_SIGCHILD].revents & POLLIN)
       break;
     if(fds[PFD_KEYBOARDINPUT].revents & POLLIN){
-      int c;
-      int mfd = tym_pane_get_masterfd(top_pane);
-      while(read(cfd[0],&c,1) == 1){
-        write(mfd, &c, 1);
-      }
+      char c;
+      while(read(cfd[0],&c,sizeof(c)) == 1)
+        tym_pane_send_key(top_pane, c);
     }
   }
 
