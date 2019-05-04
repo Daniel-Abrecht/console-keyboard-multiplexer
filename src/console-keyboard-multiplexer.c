@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
 #include <poll.h>
@@ -128,6 +129,9 @@ int main(int argc, char* argv[]){
     perror("pipe failed");
     return 1;
   }
+  // For some reason, poll may set POLLIN even if there are no data some times on this FD, causing read to block
+  // By setting it non-blocking, read will never block, and the problem will fix itself. I've no idea why this is necessary though...
+  fcntl(cfd[0], F_SETFL, O_NONBLOCK); 
   int bpid = execpane(bottom_pane, (char*[]){"console-keyboard-basic", 0}, cfd[1]);
   close(cfd[1]);
 
