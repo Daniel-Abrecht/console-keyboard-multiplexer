@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Daniel Abrecht
+// Copyright (c) 2019 Daniel Abrecht
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include <errno.h>

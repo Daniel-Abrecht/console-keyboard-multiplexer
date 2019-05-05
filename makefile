@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Daniel Abrecht
+# Copyright (c) 2019 Daniel Abrecht
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 SOURCES += src/libconsolekeyboard.c
@@ -9,7 +9,7 @@ AR = ar
 PREFIX = /usr
 
 OPTIONS += -ffunction-sections -fdata-sections -fPIC -shared -g -Og
-CC_OPTS += -fvisibility=hidden -I include
+CC_OPTS += -DLCK_BUILD -fvisibility=hidden -I include
 CC_OPTS += -std=c99 -Wall -Wextra -pedantic -Werror
 CC_OPTS += -D_DEFAULT_SOURCE
 LD_OPTS += -Wl,-gc-sections
