@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <poll.h>
 #include <libttymultiplex.h>
+#include <libconsolekeyboard.h>
 
 int keyboard_size;
 
@@ -88,6 +89,20 @@ void childexit(int x){
   write(childexitnotifier,"",1);
 }
 
+int parse(size_t s, uint8_t b[s]){
+  if(s < 1)
+    return -1;
+  enum lck_cmd cmd = *b;
+  b += 1;
+  s -= 1;
+  switch(cmd){
+    case LCK_SEND_KEY   : return tym_pane_send_special_key_by_name(TYM_PANE_FOCUS, (char*)b);
+    case LCK_SEND_STRING: return tym_pane_type(TYM_PANE_FOCUS, s, (char*)b);
+    default: return -1;
+  }
+  return 0;
+}
+
 int main(int argc, char* argv[]){
 
   if(argc <= 1)
@@ -129,9 +144,7 @@ int main(int argc, char* argv[]){
     perror("pipe failed");
     return 1;
   }
-  // For some reason, poll may set POLLIN even if there are no data some times on this FD, causing read to block
-  // By setting it non-blocking, read will never block, and the problem will fix itself. I've no idea why this is necessary though...
-  fcntl(cfd[0], F_SETFL, O_NONBLOCK); 
+  fcntl(cfd[0], F_SETFL, O_NONBLOCK);
   int bpid = execpane(bottom_pane, (char*[]){"console-keyboard-basic", 0}, cfd[1]);
   close(cfd[1]);
 
@@ -156,6 +169,10 @@ int main(int argc, char* argv[]){
   };
   size_t nfds = sizeof(fds)/sizeof(*fds);
 
+  int p_remaining = 0;
+  int p_size = 0;
+  uint8_t p_buffer[257];
+
   while( true ){
     int ret = poll(fds, nfds, -1);
     if( ret == -1 ){
@@ -169,9 +186,23 @@ int main(int argc, char* argv[]){
     if(fds[PFD_SIGCHILD].revents & POLLIN)
       break;
     if(fds[PFD_KEYBOARDINPUT].revents & POLLIN){
-      char c;
-      while(read(cfd[0],&c,sizeof(c)) == 1)
-        tym_pane_send_key(top_pane, c);
+      unsigned char s;
+      if(!p_remaining){
+        if(read(cfd[0],&s,sizeof(s)) != 1)
+          continue;
+        p_size = s;
+        p_remaining = s;
+      }else{
+        int n = read(cfd[0], p_buffer + (p_size - p_remaining), p_remaining);
+        if(n <= 0)
+          continue;
+        if(n > p_remaining)
+          abort();
+        p_remaining -= n;
+        p_buffer[p_size] = 0;
+        if(!p_remaining)
+          parse(p_size, p_buffer);
+      }
     }
   }
 
