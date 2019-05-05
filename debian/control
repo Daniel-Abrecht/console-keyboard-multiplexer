@@ -2,7 +2,7 @@ Source: console-keyboard-multiplexer
 Section: misc
 Priority: optional
 Maintainer: Daniel Patrick Abrecht <deb@danielabrecht.ch>
-Build-Depends: libttymultiplex-dev, debhelper (>= 9)
+Build-Depends: libconsolekeyboard-dev, libttymultiplex-dev, debhelper (>= 9)
 Standards-Version: 3.9.8
 #Homepage: <insert the upstream URL, if relevant>
 Vcs-Git:
