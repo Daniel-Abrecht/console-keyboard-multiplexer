@@ -1,0 +1,9 @@
+The Debian Package libconsolekeyboard
+----------------------------
+
+This packages implements the console-keyboard-multiplexer protocol.
+Using this package, a program can control the console-keyboard-multiplexer
+program to some extent, including sending keypresses to it. This
+program is for simplifying creating console keyboards.
+
+ -- Daniel Patrick Abrecht <deb@danielabrecht.ch>  Sun, 05 May 2019 19:17:19 +0000

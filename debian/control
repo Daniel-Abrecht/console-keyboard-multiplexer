@@ -1,0 +1,26 @@
+Source: libconsolekeyboard
+Priority: optional
+Maintainer: Daniel Patrick Abrecht <deb@danielabrecht.ch>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.8
+Section: libs
+#Homepage: <insert the upstream URL, if relevant>
+Vcs-Git:
+ https://github.com/Daniel-Abrecht/console-keyboard-multiplexer.git
+ https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer.git
+Vcs-Browser:
+ https://github.com/Daniel-Abrecht/console-keyboard-multiplexer
+ https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer
+
+Package: libconsolekeyboard-dev
+Section: libdevel
+Architecture: any
+Depends: libconsolekeyboard0 (= ${binary:Version}), ${misc:Depends}
+Description: libconsolekeyboard development files.
+ Library implementing the protocol for interacting with the console-keyboard-multiplexer program, development files.
+
+Package: libconsolekeyboard0
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Library for interacting with console-keyboard-multiplexer.
+ Library implementing the protocol for interacting with the console-keyboard-multiplexer program.
