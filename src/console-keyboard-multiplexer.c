@@ -9,11 +9,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 #include <poll.h>
 #include <libttymultiplex.h>
 #include <libconsolekeyboard.h>
-
-int keyboard_size;
 
 int top_pane = -1;
 struct tym_super_position_rectangle top_pane_coordinates = {
@@ -34,10 +33,9 @@ struct tym_super_position_rectangle bottom_pane_coordinates = {
   }
 };
 
-void set_keyboard_size(int size){
-  keyboard_size = size;
-  TYM_RECT_POS_REF(top_pane_coordinates, CHARFIELD, TYM_BOTTOM) = -size;
-  TYM_RECT_POS_REF(bottom_pane_coordinates, CHARFIELD, TYM_TOP) = -size;
+void set_keyboard_size(struct lck_super_size size){
+  TYM_RECT_POS_REF(top_pane_coordinates, CHARFIELD, TYM_BOTTOM) = -size.character;
+  TYM_RECT_POS_REF(bottom_pane_coordinates, CHARFIELD, TYM_TOP) = -size.character;
   if(top_pane != -1){
     if( tym_pane_resize(top_pane, &top_pane_coordinates) == -1){
 //      perror("tym_resize_pane failed");
@@ -89,7 +87,20 @@ void childexit(int x){
   write(childexitnotifier,"",1);
 }
 
-int parse(size_t s, uint8_t b[s]){
+uint64_t bytes_to_uint64(uint8_t in[8]){
+  uint64_t x = 0;
+  x = (uint64_t)in[0] << 56
+    | (uint64_t)in[1] << 48
+    | (uint64_t)in[2] << 40
+    | (uint64_t)in[3] << 32
+    | (uint64_t)in[4] << 24
+    | (uint64_t)in[5] << 16
+    | (uint64_t)in[6] << 8
+    | (uint64_t)in[7];
+  return x;
+}
+
+int parse(size_t s, uint8_t b[s+1]){
   if(s < 1)
     return -1;
   enum lck_cmd cmd = *b;
@@ -98,6 +109,12 @@ int parse(size_t s, uint8_t b[s]){
   switch(cmd){
     case LCK_SEND_KEY   : return tym_pane_send_special_key_by_name(TYM_PANE_FOCUS, (char*)b);
     case LCK_SEND_STRING: return tym_pane_type(TYM_PANE_FOCUS, s, (char*)b);
+    case LCK_SET_HEIGHT: {
+      struct lck_super_size size;
+      memset(&size, 0, sizeof(size));
+      if(s >= 8) size.character = bytes_to_uint64(b);
+      set_keyboard_size(size);
+    }; return 0;
     default: return -1;
   }
   return 0;
@@ -115,7 +132,10 @@ int main(int argc, char* argv[]){
     perror("tym_init failed");
     return 1;
   }
-  set_keyboard_size(12);
+  struct lck_super_size size = {
+    .character = 12
+  };
+  set_keyboard_size(size);
   top_pane = tym_pane_create(&top_pane_coordinates);
   if(top_pane == -1){
     perror("tym_create_pane failed");
