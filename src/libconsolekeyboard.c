@@ -56,3 +56,20 @@ int lck_send_key(const char* key){
 int lck_send_string(const char* key){
   return lck_send_cmd(LCK_SEND_STRING, strlen(key), (uint8_t*)key);
 }
+
+static void uint64_to_bytes_be(uint8_t out[8], uint64_t x){
+  out[0] = x >> 56;
+  out[1] = x >> 48;
+  out[2] = x >> 40;
+  out[3] = x >> 32;
+  out[4] = x >> 24;
+  out[5] = x >> 16;
+  out[6] = x >> 8;
+  out[7] = x;
+}
+
+int lck_set_height(struct lck_super_size size){
+  uint8_t buffer[16];
+  uint64_to_bytes_be(buffer, size.character);
+  return lck_send_cmd(LCK_SET_HEIGHT, 8, buffer);
+}
