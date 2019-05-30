@@ -157,7 +157,13 @@ int main(int argc, char* argv[]){
   childexitnotifier = sfd[1];
   signal(SIGCHLD, childexit);
 
-  // Execute programs;
+  // Freeze libttymultiplex because of upcoming forks
+  if(tym_freeze() == -1){
+    perror("tym_freeze failed");
+    return 1;
+  }
+
+  // Execute programs
   int tpid = execpane(   top_pane, argv+1, -1);
   int cfd[2];
   if(pipe(cfd) == -1){
@@ -170,6 +176,12 @@ int main(int argc, char* argv[]){
 
   (void)tpid;
   (void)bpid;
+  
+  // Resume libttymultiplex
+  if(tym_init()){
+    perror("tym_init failed");
+    return 1;
+  }
 
   // Wait for input
   enum {
