@@ -10,6 +10,7 @@ OPTIONS += -ffunction-sections -fdata-sections -g -Og
 CC_OPTS += -fvisibility=hidden -I include
 CC_OPTS += -std=c99 -Wall -Wextra -pedantic -Werror
 CC_OPTS += -D_DEFAULT_SOURCE
+CC_OPTS += -DTYM_LOG_PROJECT='"console-keyboard-multiplexer"'
 LD_OPTS += -Wl,-gc-sections
 
 LD_OPTS += -lttymultiplex

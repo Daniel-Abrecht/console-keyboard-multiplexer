@@ -47,12 +47,12 @@ void set_keyboard_size(struct lck_super_size size){
   TYM_RECT_POS_REF(bottom_pane_coordinates, CHARFIELD, TYM_TOP) = -size.character;
   if(top_pane != -1){
     if( tym_pane_resize(top_pane, &top_pane_coordinates) == -1){
-//      perror("tym_resize_pane failed");
+      TYM_U_PERROR(TYM_LOG_ERROR, "tym_resize_pane failed");
     }
   }
   if(bottom_pane != -1){
     if( tym_pane_resize(bottom_pane, &bottom_pane_coordinates) == -1){
-//      perror("tym_resize_pane failed");
+      TYM_U_PERROR(TYM_LOG_ERROR, "tym_resize_pane failed");
     }
   }
 }
@@ -120,33 +120,33 @@ int execpane(void* ptr, size_t setup_count, execpane_setup_t setup[setup_count],
   int sync_ba[2];
 
   if(pipe(endpipe) == -1){
-    perror("pipe failed");
+    TYM_U_PERROR(TYM_LOG_ERROR, "pipe failed");
     return -1;
   }
 
   if(fcntl(endpipe[0], F_SETFD, FD_CLOEXEC) == -1){
-    perror("fcntl(F_SETFD, FD_CLOEXEC) failed");
+    TYM_U_PERROR(TYM_LOG_ERROR, "fcntl(F_SETFD, FD_CLOEXEC) failed");
     close(endpipe[0]);
     close(endpipe[1]);
     return -1;
   }
 
   if(fcntl(endpipe[1], F_SETFD, FD_CLOEXEC) == -1){
-    perror("fcntl(F_SETFD, FD_CLOEXEC) failed");
+    TYM_U_PERROR(TYM_LOG_ERROR, "fcntl(F_SETFD, FD_CLOEXEC) failed");
     close(endpipe[0]);
     close(endpipe[1]);
     return -1;
   }
 
   if(pipe(sync_ab) == -1){
-    perror("pipe failed");
+    TYM_U_PERROR(TYM_LOG_ERROR, "pipe failed");
     close(endpipe[0]);
     close(endpipe[1]);
     return -1;
   }
 
   if(pipe(sync_ba) == -1){
-    perror("pipe failed");
+    TYM_U_PERROR(TYM_LOG_ERROR, "pipe failed");
     close(endpipe[0]);
     close(endpipe[1]);
     close(sync_ab[0]);
@@ -258,17 +258,17 @@ int execpane_init(void* ptr){
   if(!ug.ignore){
     bool fatal = getpid() == 0;
     if(setgid(ug.group) == -1){
-      perror("setgid failed");
+      TYM_U_PERROR(fatal ? TYM_LOG_ERROR : TYM_LOG_WARN, "setgid failed");
       if(fatal)
         return -1;
     }
     if(setgroups(ug.supplementary_group_count, ug.supplementary_group_list) == -1){
-      perror("setgroups failed");
+      TYM_U_PERROR(fatal ? TYM_LOG_ERROR : TYM_LOG_WARN, "setgroups failed");
       if(fatal)
         return -1;
     }
     if(setuid(ug.user) == -1){
-      perror("setuid failed");
+      TYM_U_PERROR(fatal ? TYM_LOG_ERROR : TYM_LOG_WARN, "setuid failed");
       if(fatal)
         return -1;
     }
@@ -289,14 +289,14 @@ int execpane_takeover_tty(void* ptr){
   (void)ptr;
   if(getpid() != getpgid(0)){
     if(setpgid(0,0) == -1){
-      dprintf(99, "setpgid failed: %s\n", strerror(errno));
+      TYM_U_PERROR(TYM_LOG_ERROR, "setpgid failed: %s");
       return -1;
     }
   }
   signal(SIGTTOU, SIG_IGN);
   signal(SIGTTIN, SIG_IGN);
   if(tcsetpgrp(STDIN_FILENO,getpid()) == -1){
-    dprintf(99, "tcsetpgrp failed: %s\n", strerror(errno));
+    TYM_U_PERROR(TYM_LOG_ERROR, "tcsetpgrp failed: %s");
     return -1;
   }
   if(is_session_leader){
@@ -317,7 +317,7 @@ int execpane_takeover_tty2(void* ptr){
   }
   if(open("/dev/tty", O_RDONLY) == -1){
     if(errno != ENXIO){
-      dprintf(99, "open failed: %s\n", strerror(errno));
+      TYM_U_PERROR(TYM_LOG_ERROR, "open failed: %s");
       return -1;
     }
     // OK, we lost the tty. This means the original process, whose content shall
@@ -327,14 +327,14 @@ int execpane_takeover_tty2(void* ptr){
     // group to something else than ours, or setsid will fail.
     int waitpipe[2];
     if(pipe(waitpipe) == -1){
-      dprintf(99, "pipe failed: %s\n", strerror(errno));
+      TYM_U_PERROR(TYM_LOG_ERROR, "pipe failed: %s");
       return -1;
     }
     int ret = fork();
     if(ret == -1){
       close(waitpipe[0]);
       close(waitpipe[1]);
-      dprintf(99, "fork failed: %s\n", strerror(errno));
+      TYM_U_PERROR(TYM_LOG_ERROR, "fork failed: %s");
       return -1;
     }
     if(!ret){
@@ -349,7 +349,7 @@ int execpane_takeover_tty2(void* ptr){
       blockreadchar(waitpipe[0]); // wait until the other process is ready
       close(waitpipe[0]);
       if(setpgid(0,ret) == -1){ // Switch to new process group of other process
-        dprintf(99, "setpgid failed: %s\n", strerror(errno));
+        TYM_U_PERROR(TYM_LOG_ERROR, "setpgid failed: %s");
         kill(ret, SIGKILL);
         return -1;
       }
@@ -357,11 +357,11 @@ int execpane_takeover_tty2(void* ptr){
       while(waitpid(ret,0,0) == -1 && errno == EINTR);
     }
     if(setsid() == -1){ // Now, getpid() != getpgid(0), now setsid should work.
-      dprintf(99, "setsid failed: %s\n", strerror(errno));
+      TYM_U_PERROR(TYM_LOG_ERROR, "setsid failed: %s");
       return -1;
     }
     if(ioctl(STDIN_FILENO, TIOCSCTTY, 0) == -1){
-      dprintf(99, "ioctl(STDIN_FILENO, TIOCSCTTY, 0) failed: %s\n", strerror(errno));
+      TYM_U_PERROR(TYM_LOG_ERROR, "ioctl(STDIN_FILENO, TIOCSCTTY, 0) failed: %s");
       return -1;
     }
   }
@@ -466,17 +466,17 @@ int parse_user(struct user_group* ug, char* user){
     int ngroups = 0;
     if(getgrouplist(pu->pw_name, ug->group, 0, &ngroups) == -1){
       if(ngroups < 0){
-        perror("getgrouplist: invalid group count");
+        TYM_U_PERROR(TYM_LOG_WARN, "getgrouplist: invalid group count");
         return 0;
       }
       gid_t* gid_list = malloc(sizeof(gid_t) * ngroups);
       if(!gid_list){
-        perror("malloc falsed");
+        TYM_U_PERROR(TYM_LOG_WARN, "malloc falsed");
         return 0;
       }
       if(getgrouplist(pu->pw_name, ug->group, gid_list, &ngroups) == -1){
         free(gid_list);
-        perror("getgrouplist falsed");
+        TYM_U_PERROR(TYM_LOG_WARN, "getgrouplist falsed");
         return 0;
       }
       ug->supplementary_group_list = gid_list;
@@ -664,7 +664,7 @@ int main(int argc, char* argv[]){
   is_session_leader = getpid() == getsid(0);
 
   if(parseopts(&argc, &argv) == -1 || argc <= 1){
-    perror("parseopts failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "parseopts failed");
     usage(*argv);
     return 1;
   }
@@ -676,7 +676,7 @@ int main(int argc, char* argv[]){
 
   if(args.print_fd >= 0){
     if(fcntl(args.print_fd, F_SETFD, FD_CLOEXEC) == -1){
-      perror("fcntl(args.print_fd, F_SETFD, FD_CLOEXEC) failed");
+      TYM_U_PERROR(TYM_LOG_FATAL, "fcntl(args.print_fd, F_SETFD, FD_CLOEXEC) failed");
       return 1;
     }
   }
@@ -685,7 +685,7 @@ int main(int argc, char* argv[]){
 
   // Initialise terminal multiplexer & add panes
   if(tym_init()){
-    perror("tym_init failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "tym_init failed");
     return 1;
   }
   struct lck_super_size size = {
@@ -694,12 +694,12 @@ int main(int argc, char* argv[]){
   set_keyboard_size(size);
   top_pane = tym_pane_create(&top_pane_coordinates);
   if(top_pane == -1){
-    perror("tym_create_pane failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "tym_create_pane failed");
     return 1;
   }
   bottom_pane = tym_pane_create(&bottom_pane_coordinates);
   if(bottom_pane == -1){
-    perror("tym_create_pane failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "tym_create_pane failed");
     return 1;
   }
   tym_pane_set_flag(bottom_pane, TYM_PF_DISALLOW_FOCUS, true);
@@ -707,7 +707,7 @@ int main(int argc, char* argv[]){
 
   int sfd[2];
   if(pipe(sfd) == -1){
-    perror("pipe failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "pipe failed");
     return 1;
   }
   childexitnotifier = sfd[1];
@@ -715,7 +715,7 @@ int main(int argc, char* argv[]){
 
   // Freeze libttymultiplex because of upcoming forks
   if(tym_freeze() == -1){
-    perror("tym_freeze failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "tym_freeze failed");
     return 1;
   }
 
@@ -739,7 +739,7 @@ int main(int argc, char* argv[]){
   }
   int cfd[2];
   if(pipe(cfd) == -1){
-    perror("pipe failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "pipe failed");
     return 1;
   }
   fcntl(cfd[0], F_SETFL, O_NONBLOCK);
@@ -750,30 +750,30 @@ int main(int argc, char* argv[]){
   if(!args.main_user.ignore){
     bool fatal = getpid() == 0;
     if(setgid(args.main_user.group) == -1){
-      perror("setgid failed");
+      TYM_U_PERROR(fatal ? TYM_LOG_FATAL : TYM_LOG_WARN, "setgid failed");
       if(fatal)
         return 1;
     }
     if(setgroups(args.main_user.supplementary_group_count, args.main_user.supplementary_group_list) == -1){
-      perror("setgroups failed");
+      TYM_U_PERROR(fatal ? TYM_LOG_FATAL : TYM_LOG_WARN, "setgroups failed");
       if(fatal)
         return 1;
     }
     if(setuid(args.main_user.user) == -1){
-      perror("setuid failed");
+      TYM_U_PERROR(fatal ? TYM_LOG_FATAL : TYM_LOG_WARN, "setuid failed");
       if(fatal)
         return 1;
     }
   }
 
   if(args.retain_pid && prctl(PR_SET_PDEATHSIG, SIGCHLD) == -1){
-    perror("prctl(PR_SET_PDEATHSIG, SIGCHLD) failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "prctl(PR_SET_PDEATHSIG, SIGCHLD) failed");
     return 1;
   }
 
   // Resume libttymultiplex
   if(tym_init()){
-    perror("tym_init failed");
+    TYM_U_PERROR(TYM_LOG_FATAL, "tym_init failed");
     return 1;
   }
 
@@ -805,7 +805,7 @@ int main(int argc, char* argv[]){
     if( ret == -1 ){
       if( errno == EINTR )
         continue;
-      perror("poll failed");
+      TYM_U_PERROR(TYM_LOG_FATAL, "poll failed");
       return 1;
     }
     if(!ret)
