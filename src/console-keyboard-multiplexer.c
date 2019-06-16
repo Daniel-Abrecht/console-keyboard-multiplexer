@@ -659,6 +659,15 @@ void childexit(int x){
   }
 }
 
+static int do_print_args(int pane, void* ptr, size_t count, const char* env[count][2]){
+  (void)pane;
+  (void)ptr;
+  for(size_t i=0; i<count; i++)
+    if(dprintf(args.print_fd, "%s=%s\n", env[i][0], env[i][1]) == -1)
+      return 1;
+  return 0;
+}
+
 int main(int argc, char* argv[]){
 
   is_session_leader = getpid() == getsid(0);
@@ -725,7 +734,9 @@ int main(int argc, char* argv[]){
     const char* ptsdev = ttyname(ptsfd);
     if(!ptsdev || !*ptsdev)
       return 1;
-    if(dprintf(args.print_fd, "TM_E_TTY=%s\nTERM=xterm\n", ptsdev) == -1)
+    if(dprintf(args.print_fd, "TM_E_TTY=%s\n", ptsdev) == -1)
+      return 1;
+    if(tym_pane_get_default_env_vars(top_pane, 0, do_print_args) == -1)
       return 1;
     close(args.print_fd);
   }else{
