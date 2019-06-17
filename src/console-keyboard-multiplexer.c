@@ -83,7 +83,7 @@ struct ckm_args {
 static struct ckm_args args = {
   .help = false,
   .print_fd = -1,
-  .keyboard = (char*[]){(char[]){"console-keyboard-basic"},0},
+  .keyboard = (char*[]){(char[]){"console-keyboard"},0},
   .main_user     = {NOBODY, NOGROUP, false},
   .keyboard_user = {NOBODY, NOGROUP, false},
   .program_user  = {NOBODY, NOGROUP, false},
@@ -618,7 +618,7 @@ void usage(const char* name){
     "\nUsage: %s [options] [-k -- [keyboard] [args]] -- program [args]\n"
     "\n"
     "If no program is specified, the login program is used.\n"
-    "If no keyboard is specified, the console-keyboard-basic program is used.\n"
+    "If no keyboard is specified, the console-keyboard program is used, which is usually a symlink to the prefered console keyboard.\n"
     "\n"
     "Optional options:\n"
     "  -h             This help text\n"
