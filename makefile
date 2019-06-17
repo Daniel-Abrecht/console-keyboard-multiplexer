@@ -31,10 +31,15 @@ bin/console-keyboard-multiplexer: build/console-keyboard-multiplexer.o
 	mkdir -p bin
 	$(CC) $(LD_OPTS) $^ -o $@
 
-install:
+install: install-bin install-config
+	@true
+
+install-bin:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin/"
-	mkdir -p "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/"
 	cp bin/console-keyboard-multiplexer "$(DESTDIR)$(PREFIX)/bin/console-keyboard-multiplexer"
+
+install-config:
+	mkdir -p "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/"
 	cp config/console-keyboard-multiplexer-systemd-override.conf "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/console-keyboard-multiplexer.conf"
 
 uninstall:
