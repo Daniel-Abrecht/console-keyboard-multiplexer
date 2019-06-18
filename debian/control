@@ -15,9 +15,10 @@ Vcs-Browser:
 Package: console-keyboard-multiplexer
 Architecture: any
 Depends: libttymultiplex0, console-keyboard, ${shlibs:Depends}, ${misc:Depends}
+Recommends: console-keyboard-multiplexer-config
 Description: Displays a keyboard and another program on the same console
 
 Package: console-keyboard-multiplexer-config
 Architecture: all
 Depends: console-keyboard-multiplexer, ${shlibs:Depends}, ${misc:Depends}
-Description:  the same console
+Description: Configure console-keyboard-multiplexer to run on VTs

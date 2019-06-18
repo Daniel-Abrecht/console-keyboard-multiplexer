@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+test "$1" = 'configure' || exit 0
+
+if [ -f /etc/inittab ]
+then
+  sed -i '/# console-keyboard-multiplexer-config new$/d;s|^# console-keyboard-multiplexer-config old: \(.*\)|\1|g' /etc/inittab
+  if grep -q '^#\?1:234\?5\?:respawn:/sbin/getty 38400 tty1$' /etc/inittab
+  then
+    sed -i 's|^4:23:respawn:/sbin/getty 38400 tty4$|4:2345:respawn:/sbin/getty 38400 tty4 # console-keyboard-multiplexer-config new\n# console-keyboard-multiplexer-config old: \0|g;s|\([123]:234\?5\?:respawn:/sbin/getty\) \(38400 tty[123]\)|\1 -n -l /usr/bin/console-keyboard-multiplexer -o "-w : -- login" \2 # console-keyboard-multiplexer-config new\n# console-keyboard-multiplexer-config old: \0|g' /etc/inittab
+  fi
+  init q || true
+  kill -s HUP 1 || true
+fi
+

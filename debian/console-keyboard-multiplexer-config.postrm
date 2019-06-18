@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+test "$1" = 'remove' || exit 0
+
+if [ -f /etc/inittab ]
+then
+  sed -i '/# console-keyboard-multiplexer-config new$/d;s|^# console-keyboard-multiplexer-config old: \(.*\)|\1|g' /etc/inittab
+  init q || true
+  kill -s HUP 1 || true
+fi
+
