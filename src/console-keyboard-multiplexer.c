@@ -568,9 +568,13 @@ int parseopts(int* pargc, char*** pargv){
   }
 
   if(nargs){
-    argv[nargs] = *argv;
+    argv[opt_argc] = *argv;
     argc -= opt_argc;
     argv += opt_argc;
+  }else if(argc){
+    argv[argc - 1] = *argv;
+    argc -= argc - 1;
+    argv += argc - 1;
   }
 
   if(args.has_keyboard){
@@ -601,7 +605,7 @@ int parseopts(int* pargc, char*** pargv){
     return -1;
   }
 
-  if(0 <= args.print_fd && argc > 1){
+  if((0 <= args.print_fd && argc != 1) || (0 > args.print_fd && argc < 2)){
     errno = EINVAL;
     return -1;
   }
@@ -672,7 +676,7 @@ int main(int argc, char* argv[]){
 
   is_session_leader = getpid() == getsid(0);
 
-  if(parseopts(&argc, &argv) == -1 || argc <= 1){
+  if(parseopts(&argc, &argv) == -1){
     TYM_U_PERROR(TYM_LOG_FATAL, "parseopts failed");
     usage(*argv);
     return 1;
