@@ -94,7 +94,7 @@ void cleanup(void){
   tym_shutdown();
 }
 
-typedef int(*execpane_setup_t)(void*ptr);
+typedef int(*execpane_setup_t)(void*ptr, pid_t main_pid, pid_t prog_pid);
 
 int blockreadchar(int fd){
   while(true){
@@ -111,9 +111,7 @@ int blockreadchar(int fd){
 }
 
 int execpane(void* ptr, size_t setup_count, execpane_setup_t setup[setup_count], char* args[], int cfd, bool inverse){
-  pid_t newpid = 0;
   pid_t oldpid = getpid();
-  pid_t result = 0;
 
   int endpipe[2];
   int sync_ab[2];
@@ -154,16 +152,30 @@ int execpane(void* ptr, size_t setup_count, execpane_setup_t setup[setup_count],
     return -1;
   }
 
-  newpid = fork();
+  pid_t newpid = fork();
   if(newpid == -1)
     return -1;
 
+  pid_t result = 0;
+  pid_t prog_pid = 0;
+  pid_t main_pid = 0;
+
   if(inverse){
-    if(!newpid)
+    if(newpid){
+      main_pid = newpid;
+    }else{
       result = oldpid;
+      main_pid = getpid();
+    }
+    prog_pid = oldpid;
   }else{
-    if(newpid)
+    if(newpid){
       result = newpid;
+      prog_pid = newpid;
+    }else{
+      prog_pid = getpid();
+    }
+    main_pid = oldpid;
   }
 
   if(result){
@@ -178,7 +190,7 @@ int execpane(void* ptr, size_t setup_count, execpane_setup_t setup[setup_count],
         goto getresult_oldproc;
       execpane_setup_t sfunc = setup[i];
       if(sfunc){
-        int ret = (*sfunc)(ptr);
+        int ret = (*sfunc)(ptr, main_pid, prog_pid);
         if(ret == -1)
           goto getresult_oldproc;
       }
@@ -205,7 +217,7 @@ int execpane(void* ptr, size_t setup_count, execpane_setup_t setup[setup_count],
       goto error_newproc;
     execpane_setup_t sfunc = setup[i];
     if(sfunc){
-      int ret = (*sfunc)(ptr);
+      int ret = (*sfunc)(ptr, main_pid, prog_pid);
       if(ret == -1)
         goto error_newproc;
     }
@@ -250,10 +262,14 @@ getresult_oldproc:;
   return result;
 }
 
-int execpane_init(void* ptr){
+int execpane_init(void* ptr, pid_t main_pid, pid_t prog_pid){
+  (void)prog_pid;
   int pane = *(int*)ptr;
   if(tym_pane_set_env(pane) == -1)
     return -1;
+  char buf[64] = {0};
+  sprintf(buf, "%ld", (long)main_pid);
+  setenv("TM_PID", buf, true);
   struct user_group ug = pane == top_pane ? args.program_user : args.keyboard_user;
   if(!ug.ignore){
     bool fatal = getpid() == 0;
@@ -285,8 +301,10 @@ void hupwaiter(int signo){
   waithup = false;
 }
 
-int execpane_takeover_tty(void* ptr){
+int execpane_takeover_tty(void* ptr, pid_t main_pid, pid_t prog_pid){
   (void)ptr;
+  (void)prog_pid;
+  (void)main_pid;
   if(getpid() != getpgid(0)){
     if(setpgid(0,0) == -1){
       TYM_U_PERROR(TYM_LOG_ERROR, "setpgid failed: %s");
@@ -307,7 +325,9 @@ int execpane_takeover_tty(void* ptr){
 }
 
 // We may have lost our controling terminal in the mean time. Reclaim it if so.
-int execpane_takeover_tty2(void* ptr){
+int execpane_takeover_tty2(void* ptr, pid_t main_pid, pid_t prog_pid){
+  (void)prog_pid;
+  (void)main_pid;
   // Wait about 2 seconds for the sighup signal, if it didn't arrive already
   for(int i=0; waithup && i < 2 * 10; i++)
     usleep(100000);
@@ -365,7 +385,7 @@ int execpane_takeover_tty2(void* ptr){
       return -1;
     }
   }
-  return execpane_takeover_tty(ptr);
+  return execpane_takeover_tty(ptr, main_pid, prog_pid);
 }
 
 uint64_t bytes_to_uint64(uint8_t in[8]){
@@ -668,7 +688,7 @@ static int do_print_args(int pane, void* ptr, size_t count, const char* env[coun
   (void)ptr;
   for(size_t i=0; i<count; i++)
     if(dprintf(args.print_fd, "%s=%s\n", env[i][0], env[i][1]) == -1)
-      return 1;
+      return -1;
   return 0;
 }
 
@@ -739,6 +759,8 @@ int main(int argc, char* argv[]){
     if(!ptsdev || !*ptsdev)
       return 1;
     if(dprintf(args.print_fd, "TM_E_TTY=%s\n", ptsdev) == -1)
+      return 1;
+    if(dprintf(args.print_fd, "TM_PID=%ld\n", (long)getpid()) == -1)
       return 1;
     if(tym_pane_get_default_env_vars(top_pane, 0, do_print_args) == -1)
       return 1;
