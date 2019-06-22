@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+[ "$1" = prereqs ] && exit 0 || true
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/sbin/consolation
+
+exit 0

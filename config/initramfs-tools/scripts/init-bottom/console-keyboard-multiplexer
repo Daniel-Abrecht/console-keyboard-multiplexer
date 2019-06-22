@@ -1,0 +1,34 @@
+#!/bin/sh
+
+[ "$1" = prereqs ] && exit 0 || true
+[ -n "$TM_INIT" ] || exit 0
+
+(
+  cd /dev/
+  for tty in console tty*
+  do
+    if [ ! -h "$tty" ]
+      then continue
+    fi
+    rm "$tty"
+    mv "orig-$tty" "$tty"
+  done
+)
+
+cat >/conf/param.conf <<EOF
+if [ -n "\$TM_INIT" ]
+then
+  unset OLDPK
+  unset TM_INIT
+  unset TM_OLD_ENV
+  exec <&- >&- 2>&-
+  kill "$TM_PID"
+  wait "$TM_PID"
+  $TM_OLD_ENV
+  exec 0<>/dev/console 1>&0 2>&0
+  echo "$OLDPK" >/proc/sys/kernel/printk
+fi
+>/conf/param.conf
+EOF
+
+exit 0

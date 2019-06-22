@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+[ "$1" = prereqs ] && exit 0 || true
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/bin/console-keyboard-multiplexer
+copy_exec /usr/bin/console-keyboard
+
+copy_file terminfo /lib/terminfo/l/linux
+copy_file terminfo /lib/terminfo/x/xterm
+
+copy_exec /usr/bin/setsid
+copy_exec /bin/sleep
+copy_exec /bin/rm
+copy_exec /bin/grep
+copy_exec /bin/sed
+
+exit 0

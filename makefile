@@ -31,7 +31,7 @@ bin/console-keyboard-multiplexer: build/console-keyboard-multiplexer.o
 	mkdir -p bin
 	$(CC) $(LD_OPTS) $^ -o $@
 
-install: install-bin install-config
+install: install-bin install-config install-initramfs-tools-config
 	@true
 
 install-bin:
@@ -42,9 +42,32 @@ install-config:
 	mkdir -p "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/"
 	cp config/console-keyboard-multiplexer-systemd-override.conf "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/console-keyboard-multiplexer.conf"
 
+install-initramfs-tools-config:
+	for file in \
+	  hooks/consolation \
+	  scripts/init-bottom/consolation \
+	  scripts/init-premount/consolation \
+	  hooks/console-keyboard-multiplexer \
+	  scripts/init-bottom/console-keyboard-multiplexer \
+	  scripts/init-premount/console-keyboard-multiplexer; \
+	do \
+	  mkdir -p "$$(dirname "$(DESTDIR)/usr/share/initramfs-tools/$$file")"; \
+	  cp -r "config/initramfs-tools/$$file" "$(DESTDIR)/usr/share/initramfs-tools/$$file"; \
+	done
+
 uninstall:
 	rm -f "$(DESTDIR)$(PREFIX)/bin/console-keyboard-multiplexer"
 	rm -f "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/console-keyboard-multiplexer.conf"
+	for file in \
+	  hooks/consolation \
+	  scripts/init-bottom/consolation \
+	  scripts/init-premount/consolation \
+	  hooks/console-keyboard-multiplexer \
+	  scripts/init-bottom/console-keyboard-multiplexer \
+	  scripts/init-premount/console-keyboard-multiplexer; \
+	do \
+	  rm "$(DESTDIR)/usr/share/initramfs-tools/$$file"; \
+	done
 
 clean:
 	rm -rf bin/ build/

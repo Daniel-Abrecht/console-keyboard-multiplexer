@@ -1,0 +1,4 @@
+/usr/share/initramfs-tools/hooks/consolation
+/usr/share/initramfs-tools/scripts/init-bottom/consolation
+/usr/share/initramfs-tools/scripts/init-premount/consolation
+

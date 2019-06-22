@@ -1,0 +1,76 @@
+#!/bin/sh
+
+[ "$1" = prereqs ] && exit 0 || true
+[ -c /dev/tty1 ] || exit 0
+[ -z "$TM_INIT" ] || exit 0
+
+OLDPK=$(cat /proc/sys/kernel/printk)
+echo 1 1 1 1 1>/proc/sys/kernel/printk
+
+console_keyboard_multiplexer_takeover(){
+  newenvfile="ckm-fifo"
+  mkfifo "$newenvfile"
+  if [ -n "$1" ]
+    then tty="$1"
+  fi
+  # Double fork for reparenting to pid 1 and subshell for disabling job control
+  {
+    # Set the controling terminal. We may not get input otherwise.
+    setsid console-keyboard-multiplexer -p 9 9>"$newenvfile" 0<>"$tty" 1>&0 2>&0 &
+  } 0<&- 1>&- 2>&- &
+  newenv="$(cat "$newenvfile")"
+  rm "$newenvfile"
+  if [ -z "$newenv" ]
+  then
+    echo "starting console-keyboard-multiplexer failed" >&2
+    echo "$OLDPK" >/proc/sys/kernel/printk
+    return 1
+  fi
+  export $newenv
+}
+
+if TERM=linux console_keyboard_multiplexer_takeover /dev/tty1
+then
+
+  TM_VARS="$(printf '%s ' $(printf '%s\n' "$newenv" | sed 's/=.*//g'))"
+  exp="$(printf '%s\n' "$newenv" | sed 's/^/export /g')"
+
+  (
+    cd /dev/
+    for tty in console tty*
+    do
+      if [ "$tty" = tty0 ]
+        then continue
+      fi
+      mv "$tty" "orig-$tty"
+      ln -s "$TM_E_TTY" "$tty"
+    done
+  )
+
+cat >/conf/param.conf <<EOF
+export OLDPK="$OLDPK"
+if [ -z "\$TM_INIT" ]
+then
+  export TM_INIT=1
+  TM_OLD_ENV=
+  for ev in $TM_VARS
+  do
+    if export -p | grep -q "^export \$ev"
+    then
+      TM_OLD_ENV="\$TM_OLD_ENV\$(export -p | grep "^export \$ev")
+"
+    else
+      TM_OLD_ENV="\$TM_OLD_ENV""unset \$ev
+"
+    fi
+  done
+  export TM_OLD_ENV
+  $exp
+  exec 0<>"\$TM_E_TTY" 1>&0 2>&0
+fi
+>/conf/param.conf
+EOF
+
+fi
+
+exit 0

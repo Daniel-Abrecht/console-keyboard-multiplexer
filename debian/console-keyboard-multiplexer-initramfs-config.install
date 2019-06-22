@@ -1,0 +1,4 @@
+/usr/share/initramfs-tools/hooks/console-keyboard-multiplexer
+/usr/share/initramfs-tools/scripts/init-bottom/console-keyboard-multiplexer
+/usr/share/initramfs-tools/scripts/init-premount/console-keyboard-multiplexer
+
