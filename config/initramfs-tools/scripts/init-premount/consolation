@@ -2,6 +2,7 @@
 
 [ "$1" = prereqs ] && exit 0 || true
 [ -c /dev/tty0 ] || exit 0
+! grep -q noconsolation /proc/cmdline || exit 0
 
 consolation --no-daemon 0<&- 1>&- 2>&- & CONSOLATION_PID=$!
 echo "export CONSOLATION_PID=$CONSOLATION_PID" >/conf/param.conf

@@ -3,6 +3,7 @@
 [ "$1" = prereqs ] && exit 0 || true
 [ -c /dev/tty1 ] || exit 0
 [ -z "$TM_INIT" ] || exit 0
+! grep -q nockm /proc/cmdline || exit 0
 
 OLDPK=$(cat /proc/sys/kernel/printk)
 echo 1 1 1 1 1>/proc/sys/kernel/printk
