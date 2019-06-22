@@ -3,6 +3,10 @@ set -e
 
 [ "$1" = prereqs ] && exit 0 || true
 
+# if another package calls update-initramfs -u before this package and the console-keyboard package is configured, the console-keyboard symlink would be missing and this script would fail.
+# exit in this case, because this package will be configured again later
+[ -h /usr/bin/console-keyboard ] || exit 0
+
 . /usr/share/initramfs-tools/hook-functions
 
 copy_exec /usr/bin/console-keyboard-multiplexer
