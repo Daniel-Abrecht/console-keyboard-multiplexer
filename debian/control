@@ -25,7 +25,8 @@ Description: Configure console-keyboard-multiplexer to run on VTs
 
 Package: console-keyboard-multiplexer-initramfs-config
 Architecture: all
-Depends: console-keyboard-multiplexer, initramfs-tools, ${shlibs:Depends}, ${misc:Depends}
+Depends: console-keyboard-multiplexer, initramfs-tools, grep, sed, util-linux, ${shlibs:Depends}, ${misc:Depends}
+Recommends: consolation-initramfs-config
 Description: Add console-keyboard-multiplexer to initramfs
 
 Package: consolation-initramfs-config
