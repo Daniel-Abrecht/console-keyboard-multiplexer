@@ -40,7 +40,7 @@ then
     cd /dev/
     for tty in console tty*
     do
-      if [ "$tty" = tty0 ]
+      if [ "$tty" = tty0 ] || [ "$tty" = tty ] || ! printf "$tty" | grep -q '^tty[0-9]*$'
         then continue
       fi
       mv "$tty" "orig-$tty"
@@ -67,7 +67,7 @@ then
   done
   export TM_OLD_ENV
   $exp
-  exec 0<>"\$TM_E_TTY" 1>&0 2>&0
+  exec 0<>"\$TM_E_TTY" 1>&0 2>&0 || true
 fi
 >/conf/param.conf
 EOF
