@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+
+[ "$1" = 'remove' ] || [ "$1" = "purge" ] || exit 0
+
+update-initramfs -u || true
