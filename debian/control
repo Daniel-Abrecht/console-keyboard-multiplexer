@@ -19,7 +19,7 @@ Depends: libconsolekeyboard0 (= ${binary:Version}), ${misc:Depends}
 Description: libconsolekeyboard development files.
  Library implementing the protocol for interacting with the console-keyboard-multiplexer program, development files.
 
-Package: libconsolekeyboard0
+Package: libconsolekeyboard1
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Library for interacting with console-keyboard-multiplexer.
