@@ -12,4 +12,11 @@ do
   copy_file libinput_quirk "$file" || true
 done
 
+for file in /lib/udev/libinput-* \
+            /lib/udev/rules.d/*libinput*.rules \
+            $(grep -rl ID_INPUT /lib/udev/rules.d/)
+do
+  copy_file libinput_udev "$file" || true
+done
+
 exit 0
