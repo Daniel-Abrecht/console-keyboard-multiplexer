@@ -14,6 +14,8 @@ console_keyboard_multiplexer_takeover(){
   if [ -n "$1" ]
     then tty="$1"
   fi
+  # Enable UTF-8 mode. Is usually the default.
+  printf '\033%%G' >"$tty"
   # Double fork for reparenting to pid 1 and subshell for disabling job control
   {
     # Set the controling terminal. We may not get input otherwise.

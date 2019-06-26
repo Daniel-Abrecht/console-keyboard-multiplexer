@@ -20,4 +20,10 @@ copy_exec /bin/rm
 copy_exec /bin/grep
 copy_exec /bin/sed
 
+# We only really need the C.UTF-8 locale, but whatever...
+for localefile in $(find /usr/lib/locale/ -type f)
+do
+  copy_file locale "$localefile"
+done
+
 exit 0
