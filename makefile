@@ -18,6 +18,9 @@ LD_OPTS += -lttymultiplex
 CC_OPTS += $(OPTIONS)
 LD_OPTS += $(OPTIONS)
 
+OBJECTS += build/console-keyboard-multiplexer.o
+OBJECTS += build/USAGE.res.o
+
 all: bin/console-keyboard-multiplexer
 
 %/.dir:
@@ -27,7 +30,19 @@ all: bin/console-keyboard-multiplexer
 build/%.o: src/%.c | build/.dir
 	$(CC) $(CC_OPTS) -c -o $@ $^
 
-bin/console-keyboard-multiplexer: build/console-keyboard-multiplexer.o
+build/%.res.o: % | build/.dir
+	file="$^"; \
+	id="res_$$(printf '%s' "$$file"|sed 's/[^a-zA-Z]/_/g'|sed 's/.*/\L\0/')"; \
+	( \
+	  echo '#include <stddef.h>'; \
+	  printf "extern const char %s[];" "$$id"; \
+	  printf "extern const size_t %s_size;" "$$id"; \
+	  printf "const char %s[] = {" "$$id"; \
+	  cat "$$file" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/.*/  "\0\\n"/'; \
+	  printf "};\nconst size_t %s_size = sizeof(%s)-1;\n" "$$id" "$$id"; \
+	) | $(CC) -x c - -c -o $@
+
+bin/console-keyboard-multiplexer: $(OBJECTS)
 	mkdir -p bin
 	$(CC) $(LD_OPTS) $^ -o $@
 

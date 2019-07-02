@@ -637,44 +637,9 @@ int parseopts(int* pargc, char*** pargv){
   return 0;
 }
 
-void usage(const char* name){
-  printf(
-    "\nUsage: %s [options] [-k -- [keyboard] [args]] -- program [args]\n"
-    "\n"
-    "If no program is specified, the login program is used.\n"
-    "If no keyboard is specified, the console-keyboard program is used, which is usually a symlink to the prefered console keyboard.\n"
-    "\n"
-    "Optional options:\n"
-    "  -h             This help text\n"
-    "  -u user:group  Specify the user and group this program shall run as.\n"
-    "  -v user:group  Specify the user and group the keyboard shall run as.\n"
-    "  -w user:group  Specify the user and group the user specified program shall run as.\n"
-    "  -k             If this option is present, the console keyboard program to be started should be specified\n"
-    "  -r             Retain the original pid. The program specified shall replace the original console-keyboard-multiplexer process, which will continue running in a fork. console-keyboard-multiplexer becoms a child of the specified program.\n"
-    "  -p fd          Instead of executing the specified program, print some environment variables to file descriptor fd. The smallest allowed fd is 3. The name of the pts is exported as environment variable TM_E_PTS.\n"
-    "\n"
-    "Additional information on dropping privileges/changing users:\n"
-    "  The console-keyboard-multiplexer is usually not able to change user & group as non-root user. It will try, but a failure is ignored.\n"
-    "  A failure to look up a user is always fatal. \n"
-    "  For security reasons, a failure to change the user is also fatal if the console-keyboard-multiplexer is running as root (uid 0).\n"
-    "  The default user & group is always nobody:nogroup, or to be more precise, 65534:65534.\n"
-    "  You can use decimal numbers or usernames. Usernames which happen to be numbers are not suported.\n"
-    "  The format is \"user\" to only specify a different user \"user:\" to also set the group, \"user:group\" to specify both, and :group to only set the group.\n"
-    "  The supplementary groups are set to the groups belonging to the specified user and include the specified group.\n"
-    "  To not change the user, group, and supplementary groups, just specify a \":\".\n"
-    "  The user 65534 (nobody) won't get any supplementary groups except 65534 (nogroup), even if supplementary groups have been added to the user nobody.\n"
-    "  If looking up the supplementary groups of a user fails, the supplementary groups will just all be dropped, with the exception of the specified group.\n"
-    "\n"
-    "Using this in an initramfs:\n"
-    "  If you want to use the console keyboard in an initramfs, first make sure to include the C.UTF-8 locale in it, or it will be displayed incorrectly.\n"
-    "  You may also need to include and load additional modules like modules for touch input devices for example.\n"
-    "\n"
-    "  There are multiple ways it can be used in an initramfs. The easiest way is to use it as normal and just execute the programs which need user input in it. Nothing special has to be done in that case.\n"
-    "  To run the init process inside the console-keyboard-multiplexer, you have two options:\n"
-    "    1) exec the console-keyboard-multiplexer from init (pid 1) so it briefly becomes init (pid 1), but use the -r option to let it exec whatever you want to run as init (pid 1) inside the console-keyboard-multiplexer. The console-keyboard-multiplexer will then make itself the child of the real init, redirects fd 0, 1 & 2, sets the ctty, etc.\n"
-    "    2) If you can't use option 1, you can also do all necessary redirections yourself using the -p option. The console-keyboard-multiplexer will write some environment variables to the file descriptor you specify and then close it. Pipes and fifos will eof after that, which makes it possible to just read and then export them. The pts to which the stdio has to be redirected will be included with the TM_E_PTS environment variable. Please note that most shells won't include an option to change their own ctty, but a ctty isn't needed for most things anyway.\n"
-    "\n"
-  , name);
+void usage(void){
+  extern const char res_usage[];
+  puts(res_usage);
 }
 
 int childexitnotifier = -1;
@@ -719,12 +684,12 @@ int main(int argc, char* argv[]){
 
   if(parseopts(&argc, &argv) == -1){
     TYM_U_PERROR(TYM_LOG_FATAL, "parseopts failed");
-    usage(*argv);
+    usage();
     return 1;
   }
 
   if(args.help){
-    usage(*argv);
+    usage();
     return 0;
   }
 
