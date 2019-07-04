@@ -1,0 +1,3 @@
+ * Implement option for redirecting input to /dev/console to the pty (TIOCCONS)
+ * Implement option to move /dev/pty/X to /dev/ttyNY, to make it possible to add them to /dev/securetty
+ * Create a daemon allowing for creating fake VTs & replacing /dev/ttyNY and /dev/tty0. This is needed by some graphical applications which check if they run on a VT and/or try to switch to a new on.
