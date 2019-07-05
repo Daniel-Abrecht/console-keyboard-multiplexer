@@ -654,7 +654,7 @@ void childexit(int x){
       break;
     for(int i=0; i<2; i++){
       if(pid == childs[i]){
-        write(childexitnotifier,"",1);
+        while( write(childexitnotifier,"",1) == -1 && errno == EINTR);
         childs[i] = -1;
       }
     }
@@ -662,7 +662,7 @@ void childexit(int x){
   for(int i=0; i<2; i++){
     if(childs[i] != -1){
       if(kill(childs[i], 0) == -1 && errno == ESRCH){
-        write(childexitnotifier,"",1);
+        while( write(childexitnotifier,"",1) == -1 && errno == EINTR );
         childs[i] = -1;
       }
     }
