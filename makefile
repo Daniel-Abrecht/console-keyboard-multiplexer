@@ -13,7 +13,7 @@ CC_OPTS += -D_DEFAULT_SOURCE
 CC_OPTS += -DTYM_LOG_PROJECT='"console-keyboard-multiplexer"'
 LD_OPTS += -Wl,-gc-sections
 
-LD_OPTS += -lttymultiplex
+LIBS += -lttymultiplex
 
 CC_OPTS += $(OPTIONS)
 LD_OPTS += $(OPTIONS)
@@ -44,7 +44,7 @@ build/%.res.o: % | build/.dir
 
 bin/console-keyboard-multiplexer: $(OBJECTS)
 	mkdir -p bin
-	$(CC) $(LD_OPTS) $^ -o $@
+	$(CC) $(LD_OPTS) $^ $(LIBS) -o $@
 
 install: install-bin install-config install-initramfs-tools-config
 	@true
