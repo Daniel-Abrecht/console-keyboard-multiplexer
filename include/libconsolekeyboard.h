@@ -28,6 +28,10 @@ enum lck_cmd {
   LCK_SET_HEIGHT  = 0x03,
 };
 
+enum lck_key_modifier_mask {
+  LCK_MODIFIER_KEY_CTRL = 0x01
+};
+
 struct lck_super_size {
   uint64_t character;
   // This may be extended with additional parameters related to other units
@@ -36,7 +40,7 @@ struct lck_super_size {
 
 LCK_EXPORT int lck_send_cmd(enum lck_cmd cmd, size_t size, uint8_t data[size]);
 LCK_EXPORT int lck_send_key(const char* key);
-LCK_EXPORT int lck_send_string(const char* key);
+LCK_EXPORT int lck_send_string(const char* string, enum lck_key_modifier_mask modifier);
 LCK_EXPORT int lck_set_height(struct lck_super_size size);
 
 #ifdef __cplusplus
