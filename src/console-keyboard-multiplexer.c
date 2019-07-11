@@ -409,7 +409,20 @@ int parse(size_t s, uint8_t b[s+1]){
   s -= 1;
   switch(cmd){
     case LCK_SEND_KEY   : return tym_pane_send_special_key_by_name(TYM_PANE_FOCUS, (char*)b);
-    case LCK_SEND_STRING: return tym_pane_type(TYM_PANE_FOCUS, s, (char*)b);
+    case LCK_SEND_STRING: {
+      if(s < 2)
+        return 0;
+      enum lck_key_modifier_mask modifiers = *b & LCK_MODIFIER_KEY_CTRL;
+      b++, s--;
+      if(!modifiers)
+        return tym_pane_type(TYM_PANE_FOCUS, s, (char*)b);
+      for(size_t i=0; i<s; i++){
+        uint_least16_t key = b[i];
+        if(modifiers & LCK_MODIFIER_KEY_CTRL)
+          key |= TYM_KEY_MODIFIER_CTRL;
+        tym_pane_send_key(TYM_PANE_FOCUS, key);
+      }
+    } return 0;
     case LCK_SET_HEIGHT: {
       struct lck_super_size size;
       memset(&size, 0, sizeof(size));
