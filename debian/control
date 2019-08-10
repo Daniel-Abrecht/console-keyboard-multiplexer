@@ -5,31 +5,57 @@ Maintainer: Daniel Patrick Abrecht <deb@danielabrecht.ch>
 Build-Depends: libconsolekeyboard-dev, libttymultiplex-dev, debhelper (>= 9)
 Standards-Version: 3.9.8
 #Homepage: <insert the upstream URL, if relevant>
-Vcs-Git:
- https://github.com/Daniel-Abrecht/console-keyboard-multiplexer.git
- https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer.git
-Vcs-Browser:
- https://github.com/Daniel-Abrecht/console-keyboard-multiplexer
- https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer
+Vcs-Git: https://projects.dpa.li/git/console-keyboard-multiplexer.git
+# Also available at:
+#   https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer.git
+#   https://source.puri.sm/DanielAbrecht/console-keyboard-multiplexer.git
+#   https://github.com/Daniel-Abrecht/console-keyboard-multiplexer.git
+Vcs-Browser: https://projects.dpa.li/git/?p=console-keyboard-multiplexer.git;a=summary
 
 Package: console-keyboard-multiplexer
 Architecture: any
 Depends: libttymultiplex0, console-keyboard, ${shlibs:Depends}, ${misc:Depends}
 Recommends: console-keyboard-multiplexer-config
 Description: Displays a keyboard and another program on the same console
+ This program is for showing a console-keyboard and another program
+ on the same console. This can be useful for using the linux console
+ with a touchscreen but without any physical keyboard, for example.
+ .
+ This package doesn't need X11 or Wayland session, it relays on
+ libttymultiplex to provide & display virtual terminals for
+ the keyboard and the other program.
 
 Package: console-keyboard-multiplexer-config
 Architecture: all
 Depends: console-keyboard-multiplexer, ${shlibs:Depends}, ${misc:Depends}
 Description: Configure console-keyboard-multiplexer to run on VTs
+ This package updates the inittab on a system which has one to run it on
+ the VTs. The login program will be started in console-keyboard-multiplexer.
+ On systems using an inittab, only the first 3 VTs will be used.
+ .
+ On systemd systems, this package adds an override vor the
+ getty service generator and replaces all VTs.
 
 Package: console-keyboard-multiplexer-initramfs-config
 Architecture: all
-Depends: console-keyboard-multiplexer, libttymultiplex0-backend-curses, initramfs-tools, grep, sed, util-linux, ${shlibs:Depends}, ${misc:Depends}
+Depends: console-keyboard-multiplexer, libttymultiplex0-backend-curses, initramfs-tools, ${shlibs:Depends}, ${misc:Depends}
 Recommends: consolation-initramfs-config
-Description: Add console-keyboard-multiplexer to initramfs
+Description: Add the console-keyboard-multiplexer to initramfs
+ This adds the consolekeyboard, the console-keyboard-multiplexer
+ and it's curses backend to the initramfs. This makes the
+ console-keyboard usable after the init-premount stage until the
+ init-bottom stage. This way, it will be available for things
+ like mounting luks devices, if something goes wrong when mounting
+ the rootfs, and similar things.
+ .
+ This package recommends the package for adding the consolation
+ package to the initramfs, which is needed for mouse/touchscreen
+ input on a linux terminal. 
 
 Package: consolation-initramfs-config
 Architecture: all
-Depends: consolation, initramfs-tools, ${shlibs:Depends}, ${misc:Depends}
+Depends: consolation (>=0.0.7-1), initramfs-tools, ${shlibs:Depends}, ${misc:Depends}
 Description: Add consolation to initramfs
+ Consolation is needed for mouse reporting on the linux console.
+ Without it, the terminal based backends of libttymultiplex won't
+ get any mouse input on the linux console.
