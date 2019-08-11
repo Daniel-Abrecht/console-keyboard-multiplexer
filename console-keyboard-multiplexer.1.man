@@ -1,0 +1,74 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" (C) Copyright 2019 Daniel Patrick Abrecht <deb@danielabrecht.ch>,
+.\"
+.TH console-keyboard-multiplexer 1 "August 11 2019"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.SH console-keyboard-multiplexer
+console-keyboard-multiplexer \- Displays a console-keyboard and another program in a single terminal
+.
+.SH SYNOPSIS
+.B console-keyboard-multiplexer
+[options] [-k -- [keyboard] [args]] -- program [args]
+.
+.SH DESCRIPTION
+The purpose of the
+.B console-keyboard-multiplexer
+is to run a console-keyboard at the bottom of a terminal and run another program in the remaining space above. The
+.B console-keyboard
+is provided by another program. 
+.
+.SH OPTIONS
+.TP
+.B  -h | --help
+This help text
+.TP
+.BI  -u \ user:group
+Specify the user and group this program shall run as.
+.TP
+.BI  -v \ user:group
+Specify the user and group the keyboard shall run as.
+.TP
+.BI  -w \ user:group
+Specify the user and group the user specified program shall run as.
+.TP
+.B  -k
+If this option is present, the console-keyboard program to be started should be specified. Otherwise
+the console-keyboard program is used, which is usually a symlink to the prefered console keyboard.
+.TP
+.B  -r
+Retain the original pid. The program specified shall replace the original console-keyboard-multiplexer process,
+which will continue running in a fork. console-keyboard-multiplexer becoms a child of the specified program.
+.TP
+.BI  -p \ fd
+Instead of executing the specified program, print some environment variables to file descriptor fd.
+The smallest allowed fd is 3. The name of the pts is exported as environment variable TM_E_PTS.
+.
+.PP
+.B Additional information for dropping privileges & changing users
+.RS
+.PP
+The console-keyboard-multiplexer is usually not able to change user & group as non-root user. It will try, but a failure is ignored.
+.PP
+A failure to look up a user is always fatal. 
+.PP
+For security reasons, a failure to change the user is also fatal if the console-keyboard-multiplexer is running as root (uid 0).
+.PP
+The default user & group is always nobody:nogroup, or to be more precise, 65534:65534.
+.PP
+You can use decimal numbers or usernames. Usernames which happen to be numbers are not suported.
+.PP
+The format is "user" to only specify a different user "user:" to also set the group, "user:group" to specify both, and :group to only set the group.
+.PP
+The supplementary groups are set to the groups belonging to the specified user and include the specified group.
+.PP
+To not change the user, group, and supplementary groups, just specify a ":".
+.PP
+The user 65534 (nobody) won't get any supplementary groups except 65534 (nogroup), even if supplementary groups have been added to the user nobody.
+.PP
+If looking up the supplementary groups of a user fails, the supplementary groups will just all be dropped, with the exception of the specified group.
+.
+.SH EXAMPLES
+.TP
+\fBconsole-keyboard-multiplexer\fR -- bash
+Execute bash with a console keyboard

@@ -19,7 +19,7 @@ CC_OPTS += $(OPTIONS)
 LD_OPTS += $(OPTIONS)
 
 OBJECTS += build/console-keyboard-multiplexer.o
-OBJECTS += build/USAGE.res.o
+OBJECTS += build/console-keyboard-multiplexer.1.man.res.o
 
 all: bin/console-keyboard-multiplexer
 
@@ -32,7 +32,7 @@ build/%.o: src/%.c | build/.dir
 
 build/%.res.o: % | build/.dir
 	file="$^"; \
-	id="res_$$(printf '%s' "$$file"|sed 's/[^a-zA-Z]/_/g'|sed 's/.*/\L\0/')"; \
+	id="res_$$(printf '%s' "$$file"|sed 's/[^a-zA-Z0-9]/_/g'|sed 's/.*/\L\0/')"; \
 	( \
 	  echo '#include <stddef.h>'; \
 	  printf "extern const char %s[];" "$$id"; \

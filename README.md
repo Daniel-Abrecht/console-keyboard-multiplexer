@@ -25,5 +25,5 @@ Don't forget to also install a console-keyboard, this is just the multiplexer fi
 
 ## Usage
 
-Look at the [USAGE](./USAGE) file for an overview of all parameters and what they do.
+Look at the man page for an overview of all parameters and what they do.
 You can also view it using the command ```console-keyboard-multiplexer --help```.

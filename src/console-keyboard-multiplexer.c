@@ -650,9 +650,39 @@ int parseopts(int* pargc, char*** pargv){
   return 0;
 }
 
-void usage(void){
-  extern const char res_usage[];
-  puts(res_usage);
+void usage(bool explicit){
+  extern const char res_console_keyboard_multiplexer_1_man[];
+  int manpipe[] = {-1,-1};
+  if(pipe(manpipe) == -1)
+    goto nope;
+  int ret = fork();
+  if(ret == -1)
+    goto nope;
+  if(ret){
+    close(manpipe[0]);
+    dprintf(manpipe[1], res_console_keyboard_multiplexer_1_man);
+    close(manpipe[1]);
+    waitpid(ret, 0, 0);
+    return;
+  }
+  close(manpipe[1]);
+  bool isroot = getuid() == 0;
+  if(setgroups(0,0) == -1 && isroot)
+    goto nope;
+  if(setgid(NOGROUP) == -1 && isroot)
+    goto nope;
+  if(setuid(NOBODY) == -1 && isroot)
+    goto nope;
+  if(dup2(manpipe[0],0) == -1)
+    goto nope;
+  if(!explicit)
+    setenv("MANPAGER","",true);
+  execlp("man","man","-l","-",0);
+  exit(1);
+nope:
+  close(manpipe[0]);
+  close(manpipe[1]);
+  puts("Invalid arguments. See manpage console_keyboard_multiplexer(1) for an example how to use this program properly.");
 }
 
 int childexitnotifier = -1;
@@ -697,12 +727,12 @@ int main(int argc, char* argv[]){
 
   if(parseopts(&argc, &argv) == -1){
     TYM_U_PERROR(TYM_LOG_FATAL, "parseopts failed");
-    usage();
+    usage(false);
     return 1;
   }
 
   if(args.help){
-    usage();
+    usage(true);
     return 0;
   }
 
