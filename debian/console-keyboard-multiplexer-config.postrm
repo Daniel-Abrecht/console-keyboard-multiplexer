@@ -1,4 +1,6 @@
 #!/bin/sh
+#DEBHELPER#
+
 set -e
 
 test "$1" = 'remove' || exit 0

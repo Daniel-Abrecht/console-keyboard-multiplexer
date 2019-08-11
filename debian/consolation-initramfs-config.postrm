@@ -1,4 +1,6 @@
 #!/bin/sh
+#DEBHELPER#
+
 set -e
 
 [ "$1" = 'remove' ] || [ "$1" = "purge" ] || exit 0
