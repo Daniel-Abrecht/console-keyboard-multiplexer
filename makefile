@@ -72,13 +72,21 @@ bin/libconsolekeyboard.a: $(OBJS) | bin/.dir
 	$(AR) scr $@ $^
 
 bin/libconsolekeyboard.so: bin/libconsolekeyboard.a
-	$(CC) $(LD_OPTS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o $@
+	$(CC) $(LD_OPTS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o bin/libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH) -Wl,-soname,libconsolekeyboard.so.$(MAJOR)
+	cd bin; \
+	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so.$(MAJOR).$(MINOR)"; \
+	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so.$(MAJOR)"; \
+	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so"
 
 install:
 	mkdir -p "$(DESTDIR)$(PREFIX)/lib"
 	mkdir -p "$(DESTDIR)$(PREFIX)/include"
 	cp bin/libconsolekeyboard.a "$(DESTDIR)$(PREFIX)/lib/libconsolekeyboard.a"
 	cp bin/libconsolekeyboard.so "$(DESTDIR)$(PREFIX)/lib/libconsolekeyboard.so"
+	cd "$(DESTDIR)$(PREFIX)/lib/"; \
+	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so.$(MAJOR).$(MINOR)"; \
+	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so.$(MAJOR)"; \
+	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so"
 	cp include/libconsolekeyboard.h "$(DESTDIR)$(PREFIX)/include/"
 
 uninstall:
