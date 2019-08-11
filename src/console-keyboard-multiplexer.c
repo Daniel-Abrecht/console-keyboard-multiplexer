@@ -651,7 +651,7 @@ int parseopts(int* pargc, char*** pargv){
 }
 
 void usage(bool explicit){
-  extern const char res_console_keyboard_multiplexer_1_man[];
+  extern const char res_man_console_keyboard_multiplexer_1[];
   int manpipe[] = {-1,-1};
   if(pipe(manpipe) == -1)
     goto nope;
@@ -660,7 +660,7 @@ void usage(bool explicit){
     goto nope;
   if(ret){
     close(manpipe[0]);
-    dprintf(manpipe[1], res_console_keyboard_multiplexer_1_man);
+    dprintf(manpipe[1], res_man_console_keyboard_multiplexer_1);
     close(manpipe[1]);
     waitpid(ret, 0, 0);
     return;
