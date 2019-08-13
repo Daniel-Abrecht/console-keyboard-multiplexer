@@ -660,7 +660,7 @@ void usage(bool explicit){
     goto nope;
   if(ret){
     close(manpipe[0]);
-    dprintf(manpipe[1], res_man_console_keyboard_multiplexer_1);
+    dprintf(manpipe[1], "%s", res_man_console_keyboard_multiplexer_1);
     close(manpipe[1]);
     waitpid(ret, 0, 0);
     return;
