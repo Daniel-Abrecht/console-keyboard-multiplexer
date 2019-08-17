@@ -10,7 +10,7 @@
 
 copy_exec /usr/bin/console-keyboard-multiplexer
 copy_exec /usr/bin/console-keyboard
-copy_exec /usr/lib/libttymultiplex/backend/40-curses.so
+copy_exec /usr/lib/libttymultiplex/backend-*/40-curses.so
 
 copy_file terminfo /lib/terminfo/l/linux
 copy_file terminfo /lib/terminfo/x/xterm
