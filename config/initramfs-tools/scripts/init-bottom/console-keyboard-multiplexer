@@ -5,14 +5,8 @@
 
 (
   cd /dev/
-  for tty in console tty*
-  do
-    if [ ! -h "$tty" ]
-      then continue
-    fi
-    rm "$tty"
-    mv "orig-$tty" "$tty"
-  done
+  rm "$TM_CONSOLE"
+  mv "orig-1" "$TM_CONSOLE"
 )
 
 cat >/conf/param.conf <<EOF
@@ -21,6 +15,7 @@ then
   unset OLDPK
   unset TM_INIT
   unset TM_OLD_ENV
+  unset TM_CONSOLE
   exec <&- >&- 2>&-
   kill "$TM_PID"
   wait "$TM_PID"

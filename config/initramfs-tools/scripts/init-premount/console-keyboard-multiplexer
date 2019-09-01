@@ -1,9 +1,16 @@
 #!/bin/sh
 
 [ "$1" = prereqs ] && exit 0 || true
-[ -c /dev/tty1 ] || exit 0
 [ -z "$TM_INIT" ] || exit 0
 ! grep -q nockm /proc/cmdline || exit 0
+read console rest </proc/consoles || exit 0
+if [ "$console" = "tty0" ]
+  then console="tty1"
+fi
+if [ "$console" != tty1 ] && ! grep -q ckm /proc/cmdline
+  then exit 0
+fi
+[ -c "/dev/$console" ] || exit 0
 
 OLDPK=$(cat /proc/sys/kernel/printk)
 echo 1 1 1 1 1>/proc/sys/kernel/printk
@@ -40,14 +47,8 @@ then
 
   (
     cd /dev/
-    for tty in console tty*
-    do
-      if [ "$tty" = tty0 ] || [ "$tty" = tty ] || ! printf "$tty" | grep -q '^tty[0-9]*$'
-        then continue
-      fi
-      mv "$tty" "orig-$tty"
-      ln -s "$TM_E_TTY" "$tty"
-    done
+    mv "$console" "orig-1"
+    ln -s "$TM_E_TTY" "$console"
   )
 
 cat >/conf/param.conf <<EOF
@@ -55,6 +56,7 @@ export OLDPK="$OLDPK"
 if [ -z "\$TM_INIT" ]
 then
   export TM_INIT=1
+  export TM_CONSOLE="$console"
   TM_OLD_ENV=
   for ev in $TM_VARS
   do
