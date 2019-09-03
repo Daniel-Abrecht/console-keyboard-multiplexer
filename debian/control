@@ -27,7 +27,7 @@ Description: Displays a keyboard and another program on the same console
 
 Package: console-keyboard-multiplexer-config
 Architecture: all
-Depends: console-keyboard-multiplexer, ${shlibs:Depends}, ${misc:Depends}
+Depends: console-keyboard-multiplexer, ${misc:Depends}
 Description: Configure console-keyboard-multiplexer to run on VTs
  This package updates the inittab on a system which has one to run it on
  the VTs. The login program will be started in console-keyboard-multiplexer.
@@ -38,7 +38,7 @@ Description: Configure console-keyboard-multiplexer to run on VTs
 
 Package: console-keyboard-multiplexer-initramfs-config
 Architecture: all
-Depends: console-keyboard-multiplexer, libttymultiplex0-backend-curses, initramfs-tools, ${shlibs:Depends}, ${misc:Depends}
+Depends: console-keyboard-multiplexer, libttymultiplex0-backend-curses, initramfs-tools, ${misc:Depends}
 Recommends: consolation-initramfs-config
 Description: Add the console-keyboard-multiplexer to initramfs
  This adds the consolekeyboard, the console-keyboard-multiplexer
@@ -54,7 +54,7 @@ Description: Add the console-keyboard-multiplexer to initramfs
 
 Package: consolation-initramfs-config
 Architecture: all
-Depends: consolation (>=0.0.7-1), initramfs-tools, ${shlibs:Depends}, ${misc:Depends}
+Depends: consolation (>=0.0.7-1), initramfs-tools, ${misc:Depends}
 Description: Add consolation to initramfs
  Consolation is needed for mouse reporting on the linux console.
  Without it, the terminal based backends of libttymultiplex won't

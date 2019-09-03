@@ -1,22 +1,26 @@
 # Copyright (c) 2018 Daniel Abrecht
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-CC = gcc
-AR = ar
-
 PREFIX = /usr
 
-OPTIONS += -ffunction-sections -fdata-sections -g -Og
+OPTIONS += -ffunction-sections -fdata-sections
+
+ifdef DEBUG
+CC_OPTS += -Og -g
+endif
+
+ifndef LENIENT
+CC_OPTS += -Werror
+endif
+
+CC_OPTS += -ffunction-sections -fdata-sections
 CC_OPTS += -fvisibility=hidden -I include
-CC_OPTS += -std=c99 -Wall -Wextra -pedantic -Werror
+CC_OPTS += -std=c99 -Wall -Wextra -pedantic
 CC_OPTS += -D_DEFAULT_SOURCE
 CC_OPTS += -DTYM_LOG_PROJECT='"console-keyboard-multiplexer"'
 LD_OPTS += -Wl,-gc-sections
 
 LIBS += -lttymultiplex
-
-CC_OPTS += $(OPTIONS)
-LD_OPTS += $(OPTIONS)
 
 OBJECTS += build/console-keyboard-multiplexer.o
 OBJECTS += build/man/console-keyboard-multiplexer.1.res.o
@@ -28,7 +32,7 @@ all: bin/console-keyboard-multiplexer
 	touch "$@"
 
 build/%.o: src/%.c | build/.dir
-	$(CC) $(CC_OPTS) -c -o $@ $^
+	$(CC) -c -o "$@" $(CC_OPTS) $(CFLAGS) "$<"
 
 build/%.res.o: % | build/%/.dir
 	file="$^"; \
@@ -40,11 +44,11 @@ build/%.res.o: % | build/%/.dir
 	  printf "const char %s[] = {" "$$id"; \
 	  cat "$$file" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/.*/  "\0\\n"/'; \
 	  printf "};\nconst size_t %s_size = sizeof(%s)-1;\n" "$$id" "$$id"; \
-	) | $(CC) -x c - -c -o $@
+	) | $(CC) -c -o "$@" -x c - $(CC_OPTS) $(CFLAGS)
 
 bin/console-keyboard-multiplexer: $(OBJECTS)
 	mkdir -p bin
-	$(CC) $(LD_OPTS) $^ $(LIBS) -o $@
+	$(CC) -o "$@" $(LD_OPTS) $^ $(LIBS) $(LDFLAGS)
 
 install: install-bin install-config install-initramfs-tools-config
 	@true
