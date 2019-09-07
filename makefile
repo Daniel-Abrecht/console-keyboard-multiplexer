@@ -13,16 +13,21 @@ AR = ar
 
 PREFIX = /usr
 
-OPTIONS += -ffunction-sections -fdata-sections -fPIC -shared -g -Og
+ifdef DEBUG
+CC_OPTS += -Og -g
+endif
+
+ifndef LENIENT
+CC_OPTS += -Werror
+endif
+
+CC_OPTS += -ffunction-sections -fdata-sections -fPIC
 CC_OPTS += -DLCK_BUILD -fvisibility=hidden -I include
-CC_OPTS += -std=c99 -Wall -Wextra -pedantic -Werror
+CC_OPTS += -std=c99 -Wall -Wextra -pedantic
 CC_OPTS += -D_DEFAULT_SOURCE
-LD_OPTS += -Wl,-gc-sections
+LD_OPTS += -Wl,-gc-sections -shared
 
 OBJS = $(patsubst src/%.c,build/%.o,$(SOURCES))
-
-CC_OPTS += $(OPTIONS)
-LD_OPTS += $(OPTIONS)
 
 FILES_WITH_LIB_VERSION += debian/control
 FILES_WITH_LIB_VERSION += $(wildcard debian/libconsolekeyboard*.*)
@@ -66,13 +71,13 @@ release@%:
 	git tag "v$$version"
 
 build/%.o: src/%.c | build/.dir
-	$(CC) $(CC_OPTS) -c -o $@ $^
+	$(CC) -c -o "$@" $(CC_OPTS) $(CFLAGS) "$<"
 
 bin/libconsolekeyboard.a: $(OBJS) | bin/.dir
 	$(AR) scr $@ $^
 
 bin/libconsolekeyboard.so: bin/libconsolekeyboard.a
-	$(CC) $(LD_OPTS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o "bin/libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" -Wl,-soname,libconsolekeyboard.so.$(MAJOR)
+	$(CC) -o "bin/libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" $(LD_OPTS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) $(LDFLAGS) -Wl,-soname,libconsolekeyboard.so.$(MAJOR)
 	cd bin; \
 	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so.$(MAJOR).$(MINOR)"; \
 	ln -sf "libconsolekeyboard.so.$(MAJOR).$(MINOR).$(PATCH)" "libconsolekeyboard.so.$(MAJOR)"; \
