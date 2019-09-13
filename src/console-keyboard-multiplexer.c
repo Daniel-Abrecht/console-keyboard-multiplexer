@@ -231,6 +231,8 @@ int execpane(void* ptr, size_t setup_count, execpane_setup_t setup[setup_count],
   close(sync_ba[1]);
   close(sync_ab[0]);
 
+  tym_zap();
+
   if(cfd > 0){
     dup2(cfd, 3);
     if(cfd != 3)
@@ -245,6 +247,7 @@ error_newproc:
   while( write(endpipe[1], (char[]){errno}, 1) == -1 && errno == EINTR );
   close(endpipe[1]);
   close(sync_ab[0]);
+  tym_zap();
   exit(1);
 getresult_oldproc:;
   close(sync_ab[1]);
@@ -912,8 +915,20 @@ int main(int argc, char* argv[]){
         if(!p_remaining)
           parse(p_size, p_buffer);
       }
-
     }
+
+    {
+      bool out = false;
+      for(size_t i=0; i<nfds; i++){
+        if(fds[i].revents & ~POLLIN){
+          TYM_U_LOG(TYM_LOG_FATAL, "fds[%zu]=%d: got unexpected revents: %lx\n", i, fds[i].fd, (unsigned long)fds[i].revents);
+          out = true;
+        }
+      }
+      if(out)
+        break;
+    }
+
   }
 
   return 0;
