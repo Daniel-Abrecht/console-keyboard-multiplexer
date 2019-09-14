@@ -12,8 +12,9 @@ copy_exec /usr/bin/console-keyboard-multiplexer
 copy_exec /usr/bin/console-keyboard
 copy_exec /usr/lib/libttymultiplex/backend-*/40-curses.so
 
-copy_file terminfo /lib/terminfo/l/linux
-copy_file terminfo /lib/terminfo/x/xterm
+for terminfo in /lib/terminfo/l/linux /usr/share/terminfo/l/libttymultiplex*
+  do copy_file terminfo "$terminfo"
+done
 
 copy_exec /usr/bin/setsid
 copy_exec /bin/sleep
