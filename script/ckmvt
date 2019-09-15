@@ -12,4 +12,4 @@ if [ "$(tty)" != "/dev/tty$1" ]
   then exec /sbin/getty -n -l "$0" -o "$*" 38400 "tty$1"
 fi
 
-exec /usr/bin/console-keyboard-multiplexer -w : -l "CTM$1" -- login
+exec /usr/bin/console-keyboard-multiplexer -w : -l "CKM$1" -- login
