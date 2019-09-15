@@ -1,0 +1,15 @@
+#!/bin/sh
+
+case "$1" in
+  *[!0-9]*)
+    echo "Usage: $0 vtnumber"
+  ;;
+esac
+
+tty="$(tty)"
+
+if [ "$(tty)" != "/dev/tty$1" ]
+  then exec /sbin/getty -n -l "$0" -o "$*" 38400 "tty$1"
+fi
+
+exec /usr/bin/console-keyboard-multiplexer -w : -l "CTM$1" -- login

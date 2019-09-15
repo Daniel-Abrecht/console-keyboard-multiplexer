@@ -56,6 +56,7 @@ install: install-bin install-config install-initramfs-tools-config
 install-bin:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin/"
 	cp bin/console-keyboard-multiplexer "$(DESTDIR)$(PREFIX)/bin/console-keyboard-multiplexer"
+	cp script/ctmvt "$(DESTDIR)$(PREFIX)/bin/ctmvt"
 
 install-config:
 	mkdir -p "$(DESTDIR)$(PREFIX)/lib/systemd/system/getty@.service.d/"

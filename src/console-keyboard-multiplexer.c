@@ -5,6 +5,8 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <execinfo.h>
 #include <pwd.h>
@@ -74,6 +76,7 @@ struct ckm_args {
   struct user_group keyboard_user;
   struct user_group program_user;
   bool has_keyboard;
+  char* ttyname;
   char** keyboard;
 };
 
@@ -88,7 +91,6 @@ static struct ckm_args args = {
   .keyboard_user = {NOBODY, NOGROUP, false},
   .program_user  = {NOBODY, NOGROUP, false},
 };
-
 
 void cleanup(void){
   tym_shutdown();
@@ -543,12 +545,13 @@ int parseopts(int* pargc, char*** pargv){
       {"user"          , required_argument, 0,  'u'},
       {"keyboard-user" , required_argument, 0,  'v'},
       {"program-user"  , required_argument, 0,  'w'},
+      {"ttyname"       , required_argument, 0,  'l'},
       {"keyboard"      , no_argument, 0,  'k'},
-      {0,         0,                 0,  0 }
+      {0, 0, 0, 0}
   };
 
   int c;
-  while((c = getopt_long(opt_argc, argv, "hrlkp:u:v:w:", long_options, 0)) != -1){
+  while((c = getopt_long(opt_argc, argv, "hrkp:u:v:w:l:", long_options, 0)) != -1){
     switch (c){
       case 'h': args.help = true; return 0;
       case 'r': args.retain_pid = true; break;
@@ -578,6 +581,20 @@ int parseopts(int* pargc, char*** pargv){
         args.program_user.option = true;
         if(parse_user(&args.program_user, optarg) == -1)
           return -1;
+      } break;
+      case 'l': {
+        if(strchr(optarg, '/')){
+          fprintf(stderr, "ttyname mustn't contain /\n");
+          return -1;
+        }
+        static char dest[64];
+        ssize_t n = snprintf(dest, sizeof(dest), "/dev/tty%s", optarg);
+        if( n < 0 || n > (ssize_t)sizeof(dest) ){
+          fprintf(stderr, "ttyname too long\n");
+          errno = EINVAL;
+          return -1;
+        }
+        args.ttyname = dest;
       } break;
       case '?':
         if(isprint(optopt))
@@ -700,7 +717,7 @@ void childexit(int x){
       break;
     for(int i=0; i<2; i++){
       if(pid == childs[i]){
-        while( write(childexitnotifier,"",1) == -1 && errno == EINTR);
+        while( write(childexitnotifier,"",1) == -1 && errno == EINTR );
         childs[i] = -1;
       }
     }
@@ -722,6 +739,96 @@ static int do_print_args(int pane, void* ptr, size_t count, const char* env[coun
     if(dprintf(args.print_fd, "%s=%s\n", env[i][0], env[i][1]) == -1)
       return -1;
   return 0;
+}
+
+int ptscheckfd[2];
+
+int start_tty_cleanup_subroutine(){
+  if(pipe(ptscheckfd) == -1){
+    TYM_U_PERROR(TYM_LOG_ERROR, "pipe failed");
+    return -1;
+  }
+  if(fcntl(ptscheckfd[1], F_SETFD, FD_CLOEXEC) == -1){
+    TYM_U_PERROR(TYM_LOG_FATAL, "fcntl(ptscheckfd[1], F_SETFD, FD_CLOEXEC) failed");
+    return -1;
+  }
+  int ret = fork();
+  if(ret == -1){
+    close(ptscheckfd[0]);
+    close(ptscheckfd[1]);
+    TYM_U_PERROR(TYM_LOG_ERROR, "fork failed");
+    return -1;
+  }
+  if(ret){
+    close(ptscheckfd[0]);
+    return 0;
+  }
+  close(ptscheckfd[1]);
+  dev_t d[2];
+  size_t i = 0;
+  while(i<sizeof(d)){
+    ssize_t n = read(ptscheckfd[0], (char*)d+i, sizeof(d)-i);
+    if(n == -1 && errno == EINTR)
+      continue;
+    if(n == -1){
+      TYM_U_PERROR(TYM_LOG_ERROR, "read failed");
+      exit(1);
+    }
+    if(n == 0)
+      exit(0);
+    i += n;
+  }
+  int fd = open(args.ttyname, O_CLOEXEC|O_NOFOLLOW);
+  if(fd == -1){
+    if(errno != EIO){
+      TYM_U_PERROR(TYM_LOG_ERROR, "open failed");
+      exit(1);
+    }
+  }else{
+    struct stat st;
+    if(fstat(fd, &st) == -1){
+      TYM_U_PERROR(TYM_LOG_FATAL, "fstat failed");
+      return 1;
+    }
+    if(!(st.st_mode & S_IFCHR) || st.st_dev != d[0] || st.st_rdev != d[1]){
+      TYM_U_LOG(TYM_LOG_ERROR, "File \"%s\" isn't the expected pts. Not removing it.", args.ttyname);
+      exit(1);
+    }
+    struct pollfd fds[] = {{
+      .fd = fd,
+      .events = POLLHUP
+    }};
+    while(true){
+      int ret = poll(fds, 1, -1);
+      if( !ret || (ret == -1 && errno == EINTR) )
+        continue;
+      if( ret < 0 || ret > 1 ){
+        TYM_U_PERROR(TYM_LOG_ERROR, "poll failed");
+        exit(1);
+      }
+      if(fds->revents)
+        break;
+    }
+    close(fd);
+  }
+  struct stat st;
+  if(stat(args.ttyname, &st) == -1){
+    TYM_U_PERROR(TYM_LOG_ERROR, "stat failed");
+    exit(1);
+  }
+  if(!(st.st_mode & S_IFCHR) || st.st_dev != d[0] || st.st_rdev != d[1]){
+    TYM_U_LOG(TYM_LOG_ERROR, "File \"%s\" isn't the expected pts. Not removing it.", args.ttyname);
+    exit(1);
+  }
+  if(umount2(args.ttyname, UMOUNT_NOFOLLOW|MNT_DETACH|MNT_FORCE) == -1){
+    TYM_U_PERROR(TYM_LOG_ERROR, "umount failed");
+    exit(1);
+  }
+  if(unlink(args.ttyname) == -1){
+    TYM_U_PERROR(TYM_LOG_ERROR, "unlink failed");
+    exit(1);
+  }
+  exit(0);
 }
 
 int main(int argc, char* argv[]){
@@ -746,6 +853,13 @@ int main(int argc, char* argv[]){
     }
   }
 
+  if(args.ttyname){
+    if(start_tty_cleanup_subroutine() == -1){
+      TYM_U_PERROR(TYM_LOG_FATAL, "start_tty_cleanup_subroutine failed");
+      return 1;
+    }
+  }
+
   atexit(cleanup);
 
   // Initialise terminal multiplexer & add panes
@@ -753,6 +867,7 @@ int main(int argc, char* argv[]){
     TYM_U_PERROR(TYM_LOG_FATAL, "tym_init failed");
     return 1;
   }
+
   struct lck_super_size size = {
     .character = 12
   };
@@ -782,6 +897,102 @@ int main(int argc, char* argv[]){
   if(tym_freeze() == -1){
     TYM_U_PERROR(TYM_LOG_FATAL, "tym_freeze failed");
     return 1;
+  }
+
+  if(args.ttyname){
+    int ptsfd = tym_pane_get_slavefd(top_pane);
+    struct stat st;
+    if(fstat(ptsfd, &st) == -1){
+      TYM_U_PERROR(TYM_LOG_FATAL, "fstat failed");
+      return 1;
+    }
+    const char* ptsdev = ttyname(ptsfd);
+    if(!ptsdev){
+      TYM_U_PERROR(TYM_LOG_FATAL, "ttyname failed");
+      return 1;
+    }
+    // Try to create a file to bind mount the pts to.
+    int fd = open(args.ttyname, O_CREAT|O_CLOEXEC|O_EXCL);
+    if(fd != -1){
+      close(fd);
+    }else{
+      if(errno != EEXIST){
+        TYM_U_PERROR(TYM_LOG_FATAL, "Failed to create file in /dev/");
+        return 1;
+      }
+      bool nope = true;
+      int err = errno;
+      // Check if this is an old empty file or if it was an old bindmounted pts no longer connected to a ptm & clean it up if so.
+      int fd = open(args.ttyname, O_CLOEXEC|O_NOFOLLOW);
+      if(fd != -1){
+        struct stat st;
+        if(fstat(fd, &st) == -1){
+          TYM_U_PERROR(TYM_LOG_FATAL, "fstat failed");
+          return 1;
+        }
+        if(st.st_mode & S_IFREG && st.st_size == 0)
+          nope = false;
+        close(fd);
+      }
+      if(fd == -1 && errno == EIO){
+        struct stat tty_st;
+        if(stat(args.ttyname, &tty_st) == -1){
+          TYM_U_PERROR(TYM_LOG_FATAL, "stat failed");
+          return 1;
+        }
+        if(tty_st.st_mode & S_IFCHR && major(st.st_rdev) == major(tty_st.st_rdev))
+          nope = false;
+        if(!nope){
+          if(umount2(args.ttyname, UMOUNT_NOFOLLOW) == -1){
+            TYM_U_PERROR(TYM_LOG_FATAL, "umount failed");
+            return 1;
+          }
+        }
+      }
+      if(nope){
+        errno = err;
+        TYM_U_PERROR(TYM_LOG_FATAL, "Failed to create file in /dev/");
+        return 1;
+      }
+    }
+    if(mount(ptsdev, args.ttyname, 0, MS_BIND, 0) == -1){
+      TYM_U_PERROR(TYM_LOG_FATAL, "mount failed");
+      goto sub_error_after_create;
+    }
+    int newpts = open(args.ttyname, O_CLOEXEC|O_NOFOLLOW|O_RDWR);
+    if(newpts == -1){
+      TYM_U_PERROR(TYM_LOG_FATAL, "open failed");
+      goto sub_error_after_mount;
+    }
+    if(dup2(newpts, ptsfd) == -1){
+      TYM_U_PERROR(TYM_LOG_FATAL, "dup2 failed");
+      goto sub_error_after_open;
+    }
+    close(newpts);
+    {
+      while( true ){
+        if(write(ptscheckfd[1], (dev_t[]){st.st_dev, st.st_rdev}, sizeof(dev_t[2])) < 0){
+          if(errno == EINTR)
+            continue;
+          TYM_U_PERROR(TYM_LOG_FATAL, "write failed");
+          return 1;
+        }
+        break;
+      }
+    }
+    if(0){
+    sub_error_after_open:
+      close(newpts);
+    sub_error_after_mount:
+      if(umount2(args.ttyname, UMOUNT_NOFOLLOW) == -1){
+        TYM_U_PERROR(TYM_LOG_WARN, "umount failed");
+      }else
+    sub_error_after_create:
+      if(unlink(args.ttyname) == -1){
+        TYM_U_PERROR(TYM_LOG_WARN, "unlink failed");
+      }
+      return 1;
+    }
   }
 
   // Execute programs

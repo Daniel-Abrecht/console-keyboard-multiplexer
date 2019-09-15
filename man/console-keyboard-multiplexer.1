@@ -40,6 +40,9 @@ the console-keyboard program is used, which is usually a symlink to the prefered
 Retain the original pid. The program specified shall replace the original console-keyboard-multiplexer process,
 which will continue running in a fork. console-keyboard-multiplexer becoms a child of the specified program.
 .TP
+.B  -l name
+Creates a pts device at /dev/tty$name.
+.TP
 .BI  -p \ fd
 Instead of executing the specified program, print some environment variables to file descriptor fd.
 The smallest allowed fd is 3. The name of the pts is exported as environment variable TM_E_PTS.
