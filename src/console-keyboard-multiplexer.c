@@ -764,6 +764,9 @@ int start_tty_cleanup_subroutine(){
     return 0;
   }
   close(ptscheckfd[1]);
+  signal(SIGTERM, SIG_IGN);
+  signal(SIGHUP, SIG_IGN);
+  signal(SIGINT, SIG_IGN);
   dev_t d[2];
   size_t i = 0;
   while(i<sizeof(d)){
