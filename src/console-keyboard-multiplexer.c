@@ -912,7 +912,7 @@ int main(int argc, char* argv[]){
       return 1;
     }
     // Try to create a file to bind mount the pts to.
-    int fd = open(args.ttyname, O_CREAT|O_CLOEXEC|O_EXCL);
+    int fd = open(args.ttyname, O_CREAT|O_CLOEXEC|O_EXCL, 0);
     if(fd != -1){
       close(fd);
     }else{
