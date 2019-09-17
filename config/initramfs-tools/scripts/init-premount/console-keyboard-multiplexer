@@ -16,20 +16,12 @@ OLDPK=$(cat /proc/sys/kernel/printk)
 echo 1 1 1 1 1>/proc/sys/kernel/printk
 
 console_keyboard_multiplexer_takeover(){
-  newenvfile="ckm-fifo"
-  mkfifo "$newenvfile"
-  if [ -n "$1" ]
-    then tty="$1"
-  fi
+  tty="$1"
   # Enable UTF-8 mode. Is usually the default.
   printf '\033%%G' >"$tty"
   # Double fork for reparenting to pid 1 and subshell for disabling job control
-  {
-    # Set the controling terminal. We may not get input otherwise.
-    setsid console-keyboard-multiplexer -p 9 9>"$newenvfile" 0<>"$tty" 1>&0 2>&0 &
-  } 0<&- 1>&- 2>&- &
-  newenv="$(cat "$newenvfile")"
-  rm "$newenvfile"
+  # Set the controling terminal. We may not get input otherwise.
+  newenv="$( ( setsid console-keyboard-multiplexer -p 9 9>&1 0<>"$tty" 1>&0 2>&0 & ) 0<&- 2>&- & )"
   if [ -z "$newenv" ]
   then
     echo "starting console-keyboard-multiplexer failed" >&2
@@ -39,7 +31,7 @@ console_keyboard_multiplexer_takeover(){
   export $newenv
 }
 
-if TERM=linux console_keyboard_multiplexer_takeover /dev/tty1
+if TERM=linux console_keyboard_multiplexer_takeover "/dev/$console"
 then
 
   TM_VARS="$(printf '%s ' $(printf '%s\n' "$newenv" | sed 's/=.*//g'))"
