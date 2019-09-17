@@ -1,6 +1,7 @@
 // Copyright (c) 2018 Daniel Abrecht
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
