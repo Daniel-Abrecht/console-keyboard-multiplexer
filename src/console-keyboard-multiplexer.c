@@ -1000,19 +1000,7 @@ int main(int argc, char* argv[]){
   }
 
   // Execute programs
-  if(args.print_fd >= 0){
-    int ptsfd = tym_pane_get_slavefd(top_pane);
-    const char* ptsdev = ttyname(ptsfd);
-    if(!ptsdev || !*ptsdev)
-      return 1;
-    if(dprintf(args.print_fd, "TM_E_TTY=%s\n", ptsdev) == -1)
-      return 1;
-    if(dprintf(args.print_fd, "TM_PID=%ld\n", (long)getpid()) == -1)
-      return 1;
-    if(tym_pane_get_default_env_vars(top_pane, 0, do_print_args) == -1)
-      return 1;
-    close(args.print_fd);
-  }else{
+  if(args.print_fd < 0){
     if(args.retain_pid){
       if((childs[0]=execpane(&top_pane, 4, (execpane_setup_t[]){0,execpane_takeover_tty,execpane_init,execpane_takeover_tty2}, argv+1, -1, true)) == -1)
         return 1;
@@ -1082,6 +1070,20 @@ int main(int argc, char* argv[]){
   int p_remaining = 0;
   int p_size = 0;
   uint8_t p_buffer[257];
+
+  if(args.print_fd >= 0){
+    int ptsfd = tym_pane_get_slavefd(top_pane);
+    const char* ptsdev = ttyname(ptsfd);
+    if(!ptsdev || !*ptsdev)
+      return 1;
+    if(dprintf(args.print_fd, "TM_E_TTY=%s\n", ptsdev) == -1)
+      return 1;
+    if(dprintf(args.print_fd, "TM_PID=%ld\n", (long)getpid()) == -1)
+      return 1;
+    if(tym_pane_get_default_env_vars(top_pane, 0, do_print_args) == -1)
+      return 1;
+    close(args.print_fd);
+  }
 
   while( true ){
 
