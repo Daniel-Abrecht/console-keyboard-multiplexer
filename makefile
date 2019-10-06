@@ -32,7 +32,7 @@ all: bin/console-keyboard-multiplexer
 	touch "$@"
 
 build/%.o: src/%.c | build/.dir
-	$(CC) -c -o "$@" $(CC_OPTS) $(CFLAGS) "$<"
+	$(CC) -c -o "$@" $(CC_OPTS) $(CPPFLAGS) $(CFLAGS) "$<"
 
 build/%.res.o: % | build/%/.dir
 	file="$^"; \
@@ -44,7 +44,7 @@ build/%.res.o: % | build/%/.dir
 	  printf "const char %s[] = {" "$$id"; \
 	  cat "$$file" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/.*/  "\0\\n"/'; \
 	  printf "};\nconst size_t %s_size = sizeof(%s)-1;\n" "$$id" "$$id"; \
-	) | $(CC) -c -o "$@" -x c - $(CC_OPTS) $(CFLAGS)
+	) | $(CC) -c -o "$@" -x c - $(CC_OPTS) $(CPPFLAGS) $(CFLAGS)
 
 bin/console-keyboard-multiplexer: $(OBJECTS)
 	mkdir -p bin

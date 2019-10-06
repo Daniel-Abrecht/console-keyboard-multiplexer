@@ -2,8 +2,8 @@ Source: console-keyboard-multiplexer
 Section: misc
 Priority: optional
 Maintainer: Daniel Patrick Abrecht <deb@danielabrecht.ch>
-Build-Depends: libconsolekeyboard-dev, libttymultiplex-dev, debhelper (>= 9)
-Standards-Version: 3.9.8
+Build-Depends: libconsolekeyboard-dev, libttymultiplex-dev, debhelper (>= 12~)
+Standards-Version: 4.3.0
 #Homepage: <insert the upstream URL, if relevant>
 Vcs-Git: https://projects.dpa.li/git/console-keyboard-multiplexer.git
 # Also available at:
@@ -18,7 +18,7 @@ Depends: libttymultiplex0, console-keyboard, ${shlibs:Depends}, ${misc:Depends}
 Recommends: console-keyboard-multiplexer-config
 Description: Displays a keyboard and another program on the same console
  This program is for showing a console-keyboard and another program
- on the same console. This can be useful for using the linux console
+ on the same console. This can be useful for using the Linux console
  with a touchscreen but without any physical keyboard, for example.
  .
  This package doesn't need X11 or Wayland session, it relays on
@@ -50,12 +50,12 @@ Description: Add the console-keyboard-multiplexer to initramfs
  .
  This package recommends the package for adding the consolation
  package to the initramfs, which is needed for mouse/touchscreen
- input on a linux terminal. 
+ input on a Linux terminal.
 
 Package: consolation-initramfs-config
 Architecture: all
 Depends: consolation (>=0.0.7-1), initramfs-tools, ${misc:Depends}
 Description: Add consolation to initramfs
- Consolation is needed for mouse reporting on the linux console.
+ Consolation is needed for mouse reporting on the Linux console.
  Without it, the terminal based backends of libttymultiplex won't
- get any mouse input on the linux console.
+ get any mouse input on the Linux console.

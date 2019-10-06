@@ -4,3 +4,4 @@ tmp/
 files
 *.substvars
 *.log
+*.debhelper
