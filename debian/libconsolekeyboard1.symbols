@@ -1,0 +1,6 @@
+libconsolekeyboard.so.1 libconsolekeyboard1 #MINVER#
+* Build-Depends-Package: libttymultiplex-dev
+ lck_send_cmd@Base 1.0.0
+ lck_send_key@Base 1.0.0
+ lck_send_string@Base 1.0.0
+ lck_set_height@Base 1.0.0

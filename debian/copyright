@@ -1,8 +1,5 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: libconsolekeyboard
-Source:
- <https://gitlab.com/DanielAbrecht/console-keyboard-multiplexer>
- <https://github.com/Daniel-Abrecht/console-keyboard-multiplexer>
 
 Files: *
 Copyright: 2019 Daniel Abrecht
