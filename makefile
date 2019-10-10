@@ -71,7 +71,7 @@ release@%:
 	git tag "v$$version"
 
 build/%.o: src/%.c | build/.dir
-	$(CC) -c -o "$@" $(CC_OPTS) $(CXXFLAGS) $(CFLAGS) "$<"
+	$(CC) -c -o "$@" $(CC_OPTS) $(CPPFLAGS) $(CFLAGS) "$<"
 
 bin/libconsolekeyboard.a: $(OBJS) | bin/.dir
 	$(AR) scr $@ $^
