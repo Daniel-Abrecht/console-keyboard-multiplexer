@@ -36,7 +36,7 @@ build/%.o: src/%.c | build/.dir
 
 build/%.res.o: % | build/%/.dir
 	file="$^"; \
-	id="res_$$(printf '%s' "$$file"|sed 's/[^a-zA-Z0-9]/_/g'|sed 's/.*/\L\0/')"; \
+	id="res_$$(printf '%s' "$$file"|sed 's/[^a-zA-Z0-9]/_/g')"; \
 	( \
 	  echo '#include <stddef.h>'; \
 	  printf "extern const char %s[];" "$$id"; \
