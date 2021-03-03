@@ -8,10 +8,7 @@ test "$1" = 'configure' || exit 0
 if [ -f /etc/inittab ]
 then
   sed -i '/# console-keyboard-multiplexer-config new$/d;s|^# console-keyboard-multiplexer-config old: \(.*\)|\1|g' /etc/inittab
-  if grep -q '^#\?1:234\?5\?:respawn:/sbin/getty 38400 tty1$' /etc/inittab
-  then
-    sed -i 's|\(\([123]\):234\?5\?:respawn:\)/sbin/getty [0-9]\+ tty\2|\1/usr/bin/ckmvt \2 # console-keyboard-multiplexer-config new\n# console-keyboard-multiplexer-config old: \0|g' /etc/inittab
-  fi
+  sed -i 's|^\(\([123]\):234\?5\?:respawn:\)/sbin/getty \(.\+ \)\?[0-9]\+ tty\2|\1/usr/bin/ckmvt \2 # console-keyboard-multiplexer-config new\n# console-keyboard-multiplexer-config old: \0|g' /etc/inittab
   init q || true
   kill -s HUP 1 || true
 fi
