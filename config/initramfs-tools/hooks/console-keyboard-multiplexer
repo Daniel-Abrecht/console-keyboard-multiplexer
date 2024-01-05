@@ -12,8 +12,12 @@ copy_exec /usr/bin/console-keyboard-multiplexer
 copy_exec /usr/bin/console-keyboard
 copy_exec /usr/lib/libttymultiplex/backend-*/40-curses.so
 
-for terminfo in /lib/terminfo/l/linux /usr/share/terminfo/l/libttymultiplex*
-  do copy_file terminfo "$terminfo"
+# Note: The terminfo file for the linux console is not at the same place in all distros
+for terminfo in \
+  /usr/share/terminfo/l/linux \
+  /lib/terminfo/l/linux \
+  /usr/share/terminfo/l/libttymultiplex*
+do copy_file terminfo "$terminfo"
 done
 
 copy_exec /usr/bin/setsid
