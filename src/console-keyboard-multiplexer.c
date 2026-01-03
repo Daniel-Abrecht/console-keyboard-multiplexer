@@ -510,12 +510,12 @@ int parse_user(struct user_group* ug, char* user){
       }
       gid_t* gid_list = malloc(sizeof(gid_t) * ngroups);
       if(!gid_list){
-        TYM_U_PERROR(TYM_LOG_WARN, "malloc falsed");
+        TYM_U_PERROR(TYM_LOG_WARN, "malloc failed");
         return 0;
       }
       if(getgrouplist(pu->pw_name, ug->group, gid_list, &ngroups) == -1){
         free(gid_list);
-        TYM_U_PERROR(TYM_LOG_WARN, "getgrouplist falsed");
+        TYM_U_PERROR(TYM_LOG_WARN, "getgrouplist failed");
         return 0;
       }
       ug->supplementary_group_list = gid_list;
@@ -744,6 +744,8 @@ static int do_print_args(int pane, void* ptr, size_t count, const char* env[coun
 
 int ptscheckfd[2];
 
+// Extra TTYs are cleaned up in another process
+// This is so we can drop privileges in the man process
 int start_tty_cleanup_subroutine(){
   if(pipe(ptscheckfd) == -1){
     TYM_U_PERROR(TYM_LOG_ERROR, "pipe failed");
@@ -768,6 +770,7 @@ int start_tty_cleanup_subroutine(){
   signal(SIGTERM, SIG_IGN);
   signal(SIGHUP, SIG_IGN);
   signal(SIGINT, SIG_IGN);
+  // Get device major / minor. We use this to verify we're removing the correct device.
   dev_t d[2];
   size_t i = 0;
   while(i<sizeof(d)){
@@ -782,38 +785,19 @@ int start_tty_cleanup_subroutine(){
       exit(0);
     i += n;
   }
-  int fd = open(args.ttyname, O_CLOEXEC|O_NOFOLLOW);
-  if(fd == -1){
-    if(errno != EIO){
-      TYM_U_PERROR(TYM_LOG_ERROR, "open failed");
+  // Wait until file descriptor gets closed
+  // This happens when the parent program exits
+  while(true){
+    char dummy;
+    ssize_t n = read(ptscheckfd[0], &dummy, 1);
+    if(n == -1 && errno == EINTR)
+      continue;
+    if(n == -1){
+      TYM_U_PERROR(TYM_LOG_ERROR, "read failed");
       exit(1);
     }
-  }else{
-    struct stat st;
-    if(fstat(fd, &st) == -1){
-      TYM_U_PERROR(TYM_LOG_FATAL, "fstat failed");
-      return 1;
-    }
-    if(!(st.st_mode & S_IFCHR) || st.st_dev != d[0] || st.st_rdev != d[1]){
-      TYM_U_LOG(TYM_LOG_ERROR, "File \"%s\" isn't the expected pts. Not removing it.", args.ttyname);
-      exit(1);
-    }
-    struct pollfd fds[] = {{
-      .fd = fd,
-      .events = POLLHUP
-    }};
-    while(true){
-      int ret = poll(fds, 1, -1);
-      if( !ret || (ret == -1 && errno == EINTR) )
-        continue;
-      if( ret < 0 || ret > 1 ){
-        TYM_U_PERROR(TYM_LOG_ERROR, "poll failed");
-        exit(1);
-      }
-      if(fds->revents)
-        break;
-    }
-    close(fd);
+    if(n == 0)
+      break;
   }
   struct stat st;
   if(stat(args.ttyname, &st) == -1){
